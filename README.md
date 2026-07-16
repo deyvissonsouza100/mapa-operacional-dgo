@@ -1,0 +1,2 @@
+# mapa-operacional-dgo
+.
