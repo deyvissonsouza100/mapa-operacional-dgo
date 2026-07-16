@@ -1,0 +1,4973 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>DGO · Mapa Operacional</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <style>
+:root {
+  --bg: #eef2f6;
+  --surface: rgba(255, 255, 255, 0.96);
+  --surface-solid: #ffffff;
+  --surface-soft: #f7f9fc;
+  --surface-muted: #edf2f7;
+  --text: #142033;
+  --muted: #6a7789;
+  --border: rgba(20, 32, 51, 0.10);
+  --border-strong: rgba(20, 32, 51, 0.18);
+  --primary: #143b67;
+  --primary-hover: #0e2d50;
+  --primary-soft: #e7eef7;
+  --gold: #bf8d2d;
+  --success: #1d7b54;
+  --danger: #b42318;
+  --shadow: 0 22px 60px rgba(20, 32, 51, 0.09);
+  --shadow-soft: 0 12px 32px rgba(20, 32, 51, 0.06);
+  --radius-xl: 26px;
+  --radius-lg: 20px;
+  --radius-md: 15px;
+  --sidebar-width: 244px;
+  --sidebar-collapsed: 82px;
+  --transition: 180ms ease;
+}
+
+html[data-theme="dark"] {
+  --bg: #09111d;
+  --surface: rgba(14, 24, 39, 0.96);
+  --surface-solid: #0e1827;
+  --surface-soft: #121f31;
+  --surface-muted: #17263a;
+  --text: #edf4ff;
+  --muted: #9eb0c8;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --primary: #8fb7e8;
+  --primary-hover: #b7d2f2;
+  --primary-soft: #172d48;
+  --gold: #d1a84f;
+  --success: #72d1a2;
+  --danger: #ff8a82;
+  --shadow: 0 26px 64px rgba(0, 0, 0, 0.34);
+  --shadow-soft: 0 14px 38px rgba(0, 0, 0, 0.24);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 20% -10%, rgba(67, 119, 173, 0.18), transparent 33rem),
+    var(--bg);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  transition:
+    background var(--transition),
+    color var(--transition);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+  transition: grid-template-columns var(--transition);
+}
+
+.app-shell.sidebar-collapsed {
+  grid-template-columns: var(--sidebar-collapsed) minmax(0, 1fr);
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 20px 14px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+}
+
+.brand {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 11px;
+  min-height: 64px;
+  padding: 0 6px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  color: #ffffff;
+  background: linear-gradient(145deg, #143b67, #0d2948);
+  box-shadow: 0 12px 24px rgba(20, 59, 103, 0.22);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+}
+
+.brand-copy {
+  min-width: 0;
+}
+
+.brand-copy strong,
+.brand-copy span,
+.brand-copy small {
+  display: block;
+}
+
+.brand-copy strong {
+  font-size: 0.95rem;
+}
+
+.brand-copy span {
+  margin-top: 3px;
+  color: var(--text);
+  font-size: 0.71rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.brand-copy small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  color: var(--text);
+  background: var(--surface-soft);
+}
+
+.sidebar-toggle span {
+  display: block;
+  transform: translateX(-1px);
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform var(--transition);
+}
+
+.sidebar-collapsed .sidebar-toggle span {
+  transform: rotate(180deg);
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 20px;
+}
+
+.nav-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  min-height: 48px;
+  padding: 0 10px 0 6px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: var(--muted);
+  background: transparent;
+  text-align: left;
+}
+
+.nav-item:hover {
+  color: var(--text);
+  background: var(--surface-soft);
+}
+
+.nav-item.active {
+  color: var(--primary);
+  border-color: var(--border);
+  background: var(--primary-soft);
+  font-weight: 800;
+}
+
+.nav-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  font-size: 1.1rem;
+}
+
+.nav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.connection-state {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-soft);
+}
+
+.connection-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--gold) 16%, transparent);
+}
+
+.connection-dot.connected {
+  background: var(--success);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--success) 16%, transparent);
+}
+
+.connection-dot.error {
+  background: var(--danger);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+.connection-copy {
+  min-width: 0;
+}
+
+.connection-copy strong,
+.connection-copy span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.connection-copy strong {
+  font-size: 0.78rem;
+}
+
+.connection-copy span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.sidebar-collapsed .brand-copy,
+.sidebar-collapsed .nav-label,
+.sidebar-collapsed .connection-copy {
+  display: none;
+}
+
+.sidebar-collapsed .brand {
+  grid-template-columns: 44px;
+  justify-content: center;
+}
+
+.sidebar-collapsed .sidebar-toggle {
+  position: fixed;
+  left: 65px;
+  top: 28px;
+  z-index: 30;
+}
+
+.sidebar-collapsed .nav-item {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 0;
+}
+
+.sidebar-collapsed .connection-state {
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.workspace {
+  min-width: 0;
+  min-height: 100vh;
+  padding: 18px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 74px;
+  padding: 12px 16px 12px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.topbar-title h1 {
+  margin: 5px 0 0;
+  font-size: 1.4rem;
+  letter-spacing: -0.025em;
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 0.67rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.search-box {
+  display: grid;
+  grid-template-columns: 24px minmax(180px, 300px);
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface-soft);
+}
+
+.search-box span {
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+.search-box input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+}
+
+.search-box input::placeholder {
+  color: var(--muted);
+}
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 15px;
+  border-radius: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.primary-button {
+  border: 1px solid transparent;
+  color: #ffffff;
+  background: #143b67;
+  box-shadow: 0 10px 24px rgba(20, 59, 103, 0.18);
+}
+
+.primary-button:hover {
+  background: #0e2d50;
+}
+
+.secondary-button {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--surface-soft);
+}
+
+.secondary-button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-muted);
+}
+
+.content-area {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px;
+  height: calc(100vh - 126px);
+  margin-top: 16px;
+}
+
+.map-panel,
+.side-panel {
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.map-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.segmented-control {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface-soft);
+  overflow-x: auto;
+}
+
+.segment {
+  min-height: 34px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.segment.active {
+  color: var(--text);
+  background: var(--surface-solid);
+  box-shadow: 0 4px 14px rgba(20, 32, 51, 0.08);
+}
+
+.map-toolbar-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.map-toolbar-meta strong {
+  color: var(--text);
+}
+
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.live-pill > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.side-panel-header,
+.resource-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.side-panel-header h2 {
+  margin: 6px 0 0;
+  font-size: 1.2rem;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.summary-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+
+.summary-card span,
+.summary-card small {
+  display: block;
+  color: var(--muted);
+}
+
+.summary-card span {
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.summary-card strong {
+  display: block;
+  margin-top: 10px;
+  color: var(--primary);
+  font-size: 1.65rem;
+}
+
+.summary-card small {
+  margin-top: 4px;
+  font-size: 0.66rem;
+}
+
+.resource-list-header {
+  margin-top: 22px;
+}
+
+.resource-list-header strong {
+  font-size: 0.88rem;
+}
+
+.resource-list-header button {
+  border: 0;
+  color: var(--primary);
+  background: transparent;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.resource-item {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  color: var(--text);
+  background: var(--surface-soft);
+  text-align: left;
+}
+
+.resource-item:hover,
+.resource-item.selected {
+  border-color: var(--border-strong);
+  background: var(--primary-soft);
+}
+
+.resource-thumb {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 50px;
+  border-radius: 12px;
+  background: var(--surface-solid);
+  overflow: hidden;
+}
+
+.resource-thumb img {
+  display: block;
+  max-width: 92%;
+  max-height: 45px;
+  object-fit: contain;
+}
+
+.resource-copy {
+  min-width: 0;
+}
+
+.resource-copy strong,
+.resource-copy span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.resource-copy strong {
+  font-size: 0.78rem;
+}
+
+.resource-copy span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.67rem;
+}
+
+.resource-tag {
+  display: inline-flex;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.resource-skeleton {
+  padding: 22px;
+  border: 1px dashed var(--border);
+  border-radius: 15px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  text-align: center;
+  font-size: 0.78rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 12, 22, 0.55);
+  backdrop-filter: blur(8px);
+}
+
+.modal-backdrop[hidden] {
+  display: none;
+}
+
+.modal-card {
+  width: min(480px, 100%);
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  color: var(--text);
+  background: var(--surface-solid);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modal-card h2 {
+  margin: 7px 0 0;
+}
+
+.modal-card p {
+  margin: 18px 0 22px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.full-width {
+  width: 100%;
+}
+
+body.print-mode {
+  overflow: auto;
+  background: #ffffff;
+}
+
+body.print-mode .sidebar,
+body.print-mode .topbar,
+body.print-mode .side-panel,
+body.print-mode .map-toolbar {
+  display: none;
+}
+
+body.print-mode .app-shell {
+  display: block;
+}
+
+body.print-mode .workspace {
+  padding: 0;
+}
+
+body.print-mode .content-area {
+  display: block;
+  height: 100vh;
+  margin: 0;
+}
+
+body.print-mode .map-panel {
+  height: 100vh;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.print-mode .map-stage,
+body.print-mode #map {
+  height: 100vh;
+}
+
+body.print-mode::before {
+  content: "DGO — DIRETORIA GERAL DE OPERAÇÕES";
+  position: fixed;
+  left: 24px;
+  top: 18px;
+  z-index: 40;
+  padding: 9px 13px;
+  border: 1px solid rgba(20, 32, 51, 0.14);
+  border-radius: 11px;
+  color: #142033;
+  background: rgba(255, 255, 255, 0.94);
+  font-size: 0.84rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 1180px) {
+  body {
+    overflow: auto;
+  }
+
+  .content-area {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .map-panel {
+    min-height: 700px;
+  }
+
+  .side-panel {
+    min-height: 420px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .search-box {
+    flex: 1 1 300px;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --sidebar-width: 82px;
+  }
+
+  .app-shell {
+    grid-template-columns: 82px minmax(0, 1fr);
+  }
+
+  .sidebar .brand-copy,
+  .sidebar .nav-label,
+  .sidebar .connection-copy {
+    display: none;
+  }
+
+  .sidebar .brand {
+    grid-template-columns: 44px;
+    justify-content: center;
+  }
+
+  .sidebar-toggle {
+    display: none;
+  }
+
+  .sidebar .nav-item {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 0;
+  }
+
+  .sidebar .connection-state {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .workspace {
+    padding: 10px;
+  }
+
+  .topbar {
+    padding: 16px;
+  }
+
+  .secondary-button,
+  .primary-button {
+    flex: 1 1 150px;
+  }
+
+  .content-area {
+    margin-top: 10px;
+  }
+
+  .map-panel {
+    min-height: 640px;
+  }
+
+  .map-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .map-toolbar-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+
+.map-stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: #e8edf3;
+}
+
+#map { width: 100%; height: 100%; min-height: 500px; }
+
+.maplibregl-map {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.maplibregl-ctrl-top-right { top: 10px; right: 10px; }
+.maplibregl-ctrl-group {
+  overflow: hidden;
+  border: 1px solid var(--border) !important;
+  border-radius: 13px !important;
+  background: var(--surface-solid) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+.maplibregl-ctrl-group button { width: 38px !important; height: 38px !important; background-color: var(--surface-solid) !important; }
+.maplibregl-ctrl-group button + button { border-top-color: var(--border) !important; }
+.maplibregl-ctrl-attrib { color: #4b5563 !important; background: rgba(255,255,255,.88) !important; }
+
+.map-loading,
+.map-empty {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 20;
+  width: min(430px, calc(100% - 40px));
+  transform: translate(-50%, -50%);
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-solid) 94%, transparent);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+  text-align: center;
+}
+.map-loading strong,.map-loading span { display:block; }
+.map-loading strong { margin-top:14px; }
+.map-loading span { margin-top:6px; color:var(--muted); font-size:.82rem; }
+.loading-spinner {
+  width:34px; height:34px; margin:0 auto;
+  border:4px solid var(--primary-soft); border-top-color:var(--primary);
+  border-radius:50%; animation:spin 900ms linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.map-status {
+  position:absolute; left:14px; bottom:14px; z-index:15;
+  display:flex; align-items:center; gap:12px; min-height:40px; padding:0 13px;
+  border:1px solid rgba(20,32,51,.13); border-radius:12px;
+  color:#142033; background:rgba(255,255,255,.94);
+  box-shadow:0 10px 26px rgba(20,32,51,.12); font-size:.72rem;
+}
+.map-status span { color:#5f6b7b; }
+
+/* Tamanho totalmente fixo: o zoom não aumenta nem reduz a figura. */
+.resource-image-marker {
+  --marker-width: 80px;
+  --marker-height: 66px;
+  position:relative;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  width:var(--marker-width);
+  height:var(--marker-height);
+  padding:0;
+  border:0;
+  background:transparent;
+  filter:drop-shadow(0 8px 9px rgba(0,0,0,.28));
+  user-select:none;
+}
+.resource-image-marker:hover,
+.resource-image-marker.selected,
+.resource-image-marker.move-enabled { z-index:60; }
+
+.resource-image-marker.move-enabled {
+  cursor:grab;
+  filter:drop-shadow(0 8px 9px rgba(0,0,0,.28)) drop-shadow(0 0 8px rgba(191,141,45,.95));
+}
+.resource-image-marker.move-enabled:active { cursor:grabbing; }
+.resource-image-marker img {
+  display:block;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  pointer-events:none;
+}
+
+/* Ponto exato da latitude/longitude. */
+.exact-position-dot {
+  position:absolute;
+  left:50%;
+  top:50%;
+  z-index:-1;
+  width:9px;
+  height:9px;
+  border:2px solid #fff;
+  border-radius:50%;
+  background:#143b67;
+  box-shadow:0 3px 8px rgba(0,0,0,.35);
+  transform:translate(-50%,-50%);
+}
+.resource-image-marker.guard-anchor .exact-position-dot {
+  top:auto;
+  bottom:-2px;
+}
+
+.marker-status {
+  position:absolute; right:-2px; bottom:-2px;
+  width:13px; height:13px; border:3px solid #fff; border-radius:50%;
+  background:#1d7b54; box-shadow:0 4px 9px rgba(0,0,0,.25);
+}
+.marker-status.indisponivel,.marker-status.fora_de_servico { background:#b42318; }
+.marker-status.manutencao { background:#bf8d2d; }
+.marker-status.disponivel { background:#2f79bd; }
+
+.resource-label-marker {
+  --connector-length:0px;
+  --connector-angle:0deg;
+  position:relative;
+  z-index:8;
+  display:block;
+  width:max-content;
+  max-width:190px;
+  padding:0;
+  border:0;
+  background:transparent;
+  user-select:none;
+}
+.resource-label-marker:hover,.resource-label-marker.selected { z-index:70; }
+.resource-label-marker .label-text {
+  position:relative; z-index:2; display:block; max-width:185px;
+  padding:6px 10px; overflow:hidden;
+  border:1px solid rgba(255,255,255,.22); border-radius:999px;
+  color:#fff; background:rgba(12,25,42,.94);
+  box-shadow:0 8px 20px rgba(0,0,0,.23);
+  font-size:.7rem; font-weight:900; letter-spacing:.025em; line-height:1.15;
+  text-overflow:ellipsis; white-space:nowrap;
+}
+.resource-label-marker.selected .label-text { background:#bf8d2d; }
+.label-connector {
+  position:absolute; left:50%; top:50%; z-index:0;
+  display:none; width:var(--connector-length); height:2px;
+  border-radius:999px; background:rgba(20,32,51,.50);
+  transform:rotate(var(--connector-angle)); transform-origin:left center;
+  pointer-events:none;
+}
+.resource-label-marker.has-connector .label-connector { display:block; }
+.label-connector::after {
+  content:""; position:absolute; right:-4px; top:50%;
+  width:8px; height:8px; border:2px solid #fff; border-radius:50%;
+  background:#143b67; transform:translateY(-50%);
+  box-shadow:0 3px 8px rgba(0,0,0,.24);
+}
+
+.resource-detail {
+  position:absolute; right:16px; bottom:16px; z-index:25;
+  display:grid; grid-template-columns:112px minmax(0,1fr); gap:16px;
+  width:min(480px,calc(100% - 32px)); max-height:calc(100% - 32px);
+  padding:16px; overflow-y:auto;
+  border:1px solid rgba(20,32,51,.13); border-radius:20px;
+  color:#142033; background:rgba(255,255,255,.97);
+  box-shadow:0 24px 54px rgba(20,32,51,.18); backdrop-filter:blur(16px);
+}
+.resource-detail[hidden] { display:none; }
+.detail-close {
+  position:absolute; right:10px; top:10px; display:grid; place-items:center;
+  width:30px; height:30px; border:1px solid rgba(20,32,51,.12);
+  border-radius:10px; color:#142033; background:#f6f8fb; font-size:1.15rem;
+}
+.detail-image { display:grid; place-items:center; min-height:118px; border-radius:16px; background:#f0f4f8; overflow:hidden; }
+.detail-image img { display:block; max-width:96%; max-height:108px; object-fit:contain; transition:transform 160ms ease; }
+.detail-copy { min-width:0; padding-right:24px; }
+.detail-copy h2 { margin:9px 0 0; font-size:1.15rem; }
+.detail-copy>p { margin:5px 0 0; color:#657386; font-size:.78rem; }
+.detail-copy dl { display:grid; gap:8px; margin:14px 0 0; }
+.detail-copy dl div { display:grid; grid-template-columns:62px minmax(0,1fr); gap:8px; }
+.detail-copy dt { color:#758196; font-size:.67rem; font-weight:800; text-transform:uppercase; }
+.detail-copy dd { margin:0; overflow:hidden; font-size:.72rem; font-weight:750; text-overflow:ellipsis; white-space:nowrap; }
+
+.detail-actions,.rotation-control {
+  margin-top:14px; padding-top:13px; border-top:1px solid rgba(20,32,51,.10);
+}
+.detail-action-button {
+  width:100%; min-height:38px; border:0; border-radius:11px;
+  color:#fff; background:#143b67; font-size:.76rem; font-weight:850;
+}
+.detail-action-button.active { background:#bf8d2d; }
+.move-help { display:block; margin-top:7px; color:#657386; font-size:.68rem; line-height:1.35; }
+.rotation-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:.75rem; }
+.rotation-heading output { min-width:48px; padding:4px 8px; border-radius:999px; color:#143b67; background:#e7eef7; font-weight:900; text-align:center; }
+.rotation-control input[type=range] { width:100%; margin:12px 0; accent-color:#143b67; }
+.rotation-buttons { display:grid; grid-template-columns:1fr 1.2fr 1fr; gap:7px; }
+.rotation-buttons button {
+  min-height:34px; border:1px solid rgba(20,32,51,.12); border-radius:10px;
+  color:#142033; background:#f4f7fa; font-size:.69rem; font-weight:800;
+}
+.delete-resource-button {
+  width:100%; min-height:38px; margin-top:14px;
+  border:1px solid rgba(180,35,24,.25); border-radius:11px;
+  color:#b42318; background:#fff0ee; font-size:.75rem; font-weight:850;
+}
+
+.placement-banner {
+  position:absolute; left:50%; top:16px; z-index:80;
+  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
+  width:min(640px,calc(100% - 32px)); transform:translateX(-50%);
+  padding:12px 14px; border:1px solid rgba(20,32,51,.14); border-radius:14px;
+  color:#142033; background:rgba(255,255,255,.97); box-shadow:0 16px 36px rgba(20,32,51,.18);
+}
+.placement-banner[hidden] { display:none; }
+.placement-banner span { color:#657386; font-size:.72rem; }
+.placement-banner button { min-height:34px; border:0; border-radius:10px; color:#fff; background:#b42318; font-weight:800; }
+
+.map-stage.placement-active #map { cursor:crosshair; }
+
+.print-exit-button {
+  position:fixed; right:22px; top:18px; z-index:200;
+  min-height:44px; padding:0 17px; border:1px solid rgba(20,32,51,.16);
+  border-radius:13px; color:#fff; background:#143b67;
+  box-shadow:0 14px 32px rgba(20,32,51,.22); font-weight:900;
+}
+.print-exit-button[hidden],.print-hint[hidden] { display:none; }
+.print-hint {
+  position:fixed; right:22px; top:70px; z-index:200;
+  padding:8px 12px; border:1px solid rgba(20,32,51,.12); border-radius:10px;
+  color:#4d5969; background:rgba(255,255,255,.95);
+  box-shadow:0 10px 22px rgba(20,32,51,.12); font-size:.7rem; font-weight:750;
+}
+.toast {
+  position:fixed; left:50%; bottom:24px; z-index:250;
+  display:grid; gap:3px; width:min(390px,calc(100% - 32px)); transform:translateX(-50%);
+  padding:13px 16px; border:1px solid rgba(20,32,51,.14); border-radius:14px;
+  color:#142033; background:rgba(255,255,255,.97);
+  box-shadow:0 20px 48px rgba(20,32,51,.22); text-align:center;
+}
+.toast[hidden] { display:none; }
+.toast strong { font-size:.78rem; }
+.toast span { color:#657386; font-size:.7rem; }
+
+.resource-form-modal { width:min(720px,100%); }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:13px; margin-top:20px; }
+.form-field { display:grid; gap:7px; }
+.form-field span { color:var(--muted); font-size:.73rem; font-weight:800; }
+.form-field input,.form-field select {
+  width:100%; min-height:43px; padding:0 12px;
+  border:1px solid var(--border); border-radius:12px;
+  color:var(--text); background:var(--surface-soft);
+}
+.position-actions,.modal-form-actions { display:flex; gap:10px; margin-top:16px; }
+.position-actions button { flex:1; }
+.modal-form-actions { justify-content:flex-end; padding-top:16px; border-top:1px solid var(--border); }
+.form-help { margin:10px 0 0; color:var(--muted); font-size:.72rem; }
+
+body.print-mode .map-status,
+body.print-mode .resource-detail,
+body.print-mode .maplibregl-ctrl-group,
+body.print-mode .placement-banner { display:none !important; }
+
+@media(max-width:760px) {
+  .resource-detail { left:10px; right:10px; bottom:10px; grid-template-columns:84px minmax(0,1fr); width:auto; }
+  .detail-image { min-height:96px; }
+  .detail-image img { max-height:88px; }
+  .resource-label-marker .label-text { max-width:125px; font-size:.62rem; }
+  .form-grid { grid-template-columns:1fr; }
+  .position-actions,.modal-form-actions { flex-direction:column; }
+  .placement-banner { grid-template-columns:1fr auto; }
+  .placement-banner span { grid-column:1/-1; }
+}
+
+
+/* =========================================================
+   ETAPA 13 — ÂNCORA UNIVERSAL FIXA
+   O elemento do MapLibre mede 1px e permanece exatamente na
+   latitude/longitude. A imagem é posicionada dentro dele.
+   ========================================================= */
+
+.resource-anchor-marker {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  user-select: none;
+}
+
+.resource-anchor-marker:hover,
+.resource-anchor-marker.selected,
+.resource-anchor-marker.move-enabled {
+  z-index: 80;
+}
+
+.resource-anchor-marker.move-enabled {
+  cursor: grab;
+}
+
+.resource-anchor-marker.move-enabled:active {
+  cursor: grabbing;
+}
+
+.resource-exact-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  width: 9px;
+  height: 9px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #143b67;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.38);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.resource-visual {
+  --visual-width: 90px;
+  --visual-height: 70px;
+  --visual-rotation: 0deg;
+  --visual-x: -50%;
+  --visual-y: -50%;
+  --visual-origin: 50% 50%;
+
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: var(--visual-width);
+  height: var(--visual-height);
+  filter: drop-shadow(0 8px 9px rgba(0, 0, 0, 0.28));
+  transform:
+    translate(var(--visual-x), var(--visual-y))
+    rotate(var(--visual-rotation));
+  transform-origin: var(--visual-origin);
+  pointer-events: auto;
+}
+
+.resource-anchor-marker.category-guarda .resource-visual {
+  --visual-y: -100%;
+  --visual-origin: 50% 100%;
+}
+
+.resource-anchor-marker.move-enabled .resource-visual {
+  filter:
+    drop-shadow(0 8px 9px rgba(0, 0, 0, 0.28))
+    drop-shadow(0 0 8px rgba(191, 141, 45, 0.95));
+}
+
+.resource-visual img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.resource-anchor-marker .marker-status {
+  right: -3px;
+  bottom: -3px;
+}
+
+.library-shortcut-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 43px;
+  margin-top: 15px;
+  border: 1px dashed color-mix(in srgb, var(--primary) 45%, var(--border));
+  border-radius: 12px;
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.library-modal {
+  width: min(980px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
+}
+
+.library-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.9fr) minmax(340px, 1.1fr);
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.library-upload-card,
+.library-items-panel {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-soft);
+}
+
+.library-upload-card h3,
+.library-items-header h3 {
+  margin: 6px 0 0;
+  font-size: 1rem;
+}
+
+.library-upload-card > div > p {
+  margin: 8px 0 16px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.upload-dropzone {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 5px;
+  min-height: 132px;
+  margin-top: 13px;
+  padding: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 15px;
+  color: var(--text);
+  background: var(--surface-solid);
+  text-align: center;
+  cursor: pointer;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.dragging {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.upload-dropzone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upload-icon {
+  font-size: 1.7rem;
+  color: var(--primary);
+}
+
+.upload-dropzone strong {
+  font-size: 0.82rem;
+}
+
+.upload-dropzone small {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.image-preview-box {
+  display: grid;
+  place-items: center;
+  min-height: 140px;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  color: var(--muted);
+  background:
+    linear-gradient(45deg, var(--surface-muted) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--surface-muted) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--surface-muted) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--surface-muted) 75%);
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+  overflow: hidden;
+  font-size: 0.72rem;
+}
+
+.image-preview-box img {
+  display: block;
+  max-width: 100%;
+  max-height: 170px;
+  object-fit: contain;
+}
+
+.dimension-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.library-items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.library-items-header > strong {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.library-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.library-type-card {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  min-height: 88px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-solid);
+}
+
+.library-type-image {
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 66px;
+  border-radius: 11px;
+  background: var(--surface-soft);
+  overflow: hidden;
+}
+
+.library-type-image img {
+  display: block;
+  max-width: 96%;
+  max-height: 62px;
+  object-fit: contain;
+}
+
+.library-type-copy {
+  min-width: 0;
+}
+
+.library-type-copy strong,
+.library-type-copy span,
+.library-type-copy small {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.library-type-copy strong {
+  font-size: 0.75rem;
+}
+
+.library-type-copy span {
+  margin-top: 5px;
+  color: var(--primary);
+  font-size: 0.65rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.library-type-copy small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.62rem;
+}
+
+@media (max-width: 820px) {
+  .library-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .library-items {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================================
+   ETAPA 14 — ARRASTE DIRETO E ESPELHAMENTO
+   ========================================================= */
+
+.detail-actions-info {
+  display: grid;
+  gap: 7px;
+}
+
+.detail-actions-info strong {
+  font-size: 0.75rem;
+}
+
+.resource-anchor-marker {
+  touch-action: none;
+}
+
+.resource-anchor-marker .resource-visual {
+  --visual-flip: 1;
+  transform:
+    translate(var(--visual-x), var(--visual-y))
+    rotate(var(--visual-rotation))
+    scaleX(var(--visual-flip));
+}
+
+.resource-anchor-marker.auto-draggable::after {
+  content: "↔";
+  position: absolute;
+  right: -10px;
+  top: -12px;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(20, 32, 51, 0.14);
+  border-radius: 999px;
+  color: #143b67;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 6px 14px rgba(20, 32, 51, 0.14);
+  font-size: 0.78rem;
+  font-weight: 900;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 140ms ease, transform 140ms ease;
+  pointer-events: none;
+}
+
+.resource-anchor-marker:hover::after,
+.resource-anchor-marker.selected::after,
+.resource-anchor-marker.move-enabled::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.flip-control {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid rgba(20, 32, 51, 0.10);
+}
+
+.flip-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.75rem;
+}
+
+.flip-heading output {
+  min-width: 78px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #143b67;
+  background: #e7eef7;
+  font-weight: 900;
+  text-align: center;
+}
+
+.flip-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.flip-buttons button {
+  min-height: 34px;
+  border: 1px solid rgba(20, 32, 51, 0.12);
+  border-radius: 10px;
+  color: #142033;
+  background: #f4f7fa;
+  font-size: 0.69rem;
+  font-weight: 800;
+}
+
+.flip-buttons button.active {
+  color: #ffffff;
+  background: #143b67;
+  border-color: #143b67;
+}
+
+
+/* =========================================================
+   ETAPA 15 — SEM PONTOS + ZOOM PROGRESSIVO
+   ========================================================= */
+
+.resource-exact-dot,
+.resource-anchor-marker .exact-position-dot,
+.resource-anchor-marker .marker-status {
+  display: none !important;
+}
+
+.resource-anchor-marker .resource-visual {
+  transition:
+    width 90ms linear,
+    height 90ms linear;
+}
+
+/* Mantém a figura presa ao mesmo ponto, independentemente do tamanho. */
+.resource-anchor-marker:not(.category-guarda) .resource-visual {
+  --visual-x: -50%;
+  --visual-y: -50%;
+  --visual-origin: 50% 50%;
+}
+
+.resource-anchor-marker.category-guarda .resource-visual {
+  --visual-x: -50%;
+  --visual-y: -100%;
+  --visual-origin: 50% 100%;
+}
+
+
+/* =========================================================
+   ETAPA 16 — EDIÇÃO DE RECURSOS
+   ========================================================= */
+
+.edit-resource-button {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 14px;
+  border: 1px solid rgba(20, 59, 103, 0.22);
+  border-radius: 11px;
+  color: #143b67;
+  background: #edf4fb;
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.edit-resource-button:hover {
+  background: #dfeaf6;
+}
+
+
+/* =========================================================
+   ETAPA 17 — AJUSTES VISUAIS
+   ========================================================= */
+
+.visual-settings-modal {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
+}
+
+.settings-preview {
+  margin-top: 18px;
+}
+
+.settings-preview-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 190px;
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background:
+    linear-gradient(rgba(20, 59, 103, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 59, 103, 0.06) 1px, transparent 1px),
+    var(--surface-soft);
+  background-size: 28px 28px;
+}
+
+.settings-preview-stage::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 58%;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(121, 133, 148, 0.16);
+  transform: rotate(-8deg);
+}
+
+.settings-preview-resource {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.settings-preview-image {
+  display: grid;
+  place-items: center;
+  width: 100px;
+  height: 64px;
+  border: 3px solid #ffffff;
+  border-radius: 17px 17px 13px 13px;
+  color: #ffffff;
+  background: #143b67;
+  box-shadow: 0 10px 22px rgba(20, 32, 51, 0.24);
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  transition: width 140ms ease, height 140ms ease;
+}
+
+.settings-preview-resource > strong {
+  display: block;
+  max-width: 210px;
+  padding: 6px 11px;
+  overflow: hidden;
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgba(12, 25, 42, 0.94);
+  box-shadow: 0 8px 18px rgba(20, 32, 51, 0.18);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: font-size 140ms ease, opacity 140ms ease;
+}
+
+.visual-settings-grid {
+  display: grid;
+  gap: 13px;
+  margin-top: 18px;
+}
+
+.range-setting,
+.toggle-setting {
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface-soft);
+}
+
+.range-setting {
+  display: grid;
+  gap: 10px;
+}
+
+.range-setting-heading,
+.toggle-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.range-setting-heading strong,
+.toggle-setting strong {
+  font-size: 0.78rem;
+}
+
+.range-setting-heading output {
+  min-width: 72px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.range-setting input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+.range-setting small,
+.toggle-setting small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.toggle-setting input {
+  width: 42px;
+  height: 22px;
+  accent-color: var(--primary);
+}
+
+.settings-note {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(191, 141, 45, 0.22);
+  border-radius: 13px;
+  color: var(--text);
+  background: rgba(191, 141, 45, 0.08);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+body.labels-hidden .resource-label-marker {
+  display: none !important;
+}
+
+@media (max-width: 620px) {
+  .range-setting-heading,
+  .toggle-setting {
+    align-items: flex-start;
+  }
+
+  .modal-form-actions {
+    flex-direction: column;
+  }
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar" aria-label="Navegação principal">
+      <div class="brand">
+        <div class="brand-mark">DGO</div>
+        <div class="brand-copy">
+          <strong>DGO</strong>
+          <span>Diretoria Geral de Operações</span>
+          <small>GCM Belo Horizonte</small>
+        </div>
+        <button class="icon-button sidebar-toggle" id="sidebarToggle" type="button" aria-label="Recolher menu">
+          <span>‹</span>
+        </button>
+      </div>
+
+      <nav class="nav-list">
+        <button class="nav-item active" type="button"><span class="nav-icon">⌖</span><span class="nav-label">Mapa</span></button>
+        <button class="nav-item" type="button"><span class="nav-icon">◫</span><span class="nav-label">Recursos</span></button>
+        <button class="nav-item" id="libraryNavButton" type="button"><span class="nav-icon">▧</span><span class="nav-label">Biblioteca</span></button>
+        <button class="nav-item" type="button"><span class="nav-icon">⇩</span><span class="nav-label">Importar</span></button>
+        <button class="nav-item" id="settingsNavButton" type="button"><span class="nav-icon">⚙</span><span class="nav-label">Ajustes</span></button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="connection-state">
+          <span class="connection-dot" id="connectionDot"></span>
+          <div class="connection-copy">
+            <strong id="connectionTitle">Conectando...</strong>
+            <span id="connectionSubtitle">Supabase</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div class="topbar-title">
+          <span class="eyebrow">VISÃO OPERACIONAL</span>
+          <h1>Mapa de recursos</h1>
+        </div>
+
+        <div class="topbar-actions">
+          <label class="search-box">
+            <span>⌕</span>
+            <input id="globalSearch" type="search" placeholder="Buscar nome, prefixo ou equipe" autocomplete="off" />
+          </label>
+
+          <button class="secondary-button" id="themeToggle" type="button">
+            <span id="themeIcon">☾</span><span id="themeText">Tema escuro</span>
+          </button>
+
+          <button class="secondary-button" id="printModeButton" type="button">
+            <span>▣</span> Modo Print
+          </button>
+
+          <button class="primary-button" id="addResourceButton" type="button">
+            <span>＋</span> Adicionar recurso
+          </button>
+        </div>
+      </header>
+
+      <section class="content-area">
+        <section class="map-panel">
+          <div class="map-toolbar">
+            <div class="segmented-control" id="categoryFilters">
+              <button class="segment active" type="button" data-category="todos">Todos</button>
+              <button class="segment" type="button" data-category="viatura">Viaturas</button>
+              <button class="segment" type="button" data-category="motocicleta">Motos</button>
+              <button class="segment" type="button" data-category="guarda">Guardas</button>
+              <button class="segment" type="button" data-category="onibus">Ônibus</button>
+            </div>
+
+            <div class="map-toolbar-meta">
+              <span class="live-pill"><span></span> Atualização ativa</span>
+              <strong id="resourceTotal">0 recursos</strong>
+            </div>
+          </div>
+
+          <div class="map-stage" id="mapStage">
+            <div id="map" aria-label="Mapa operacional"></div>
+
+            <div class="map-loading" id="mapLoading">
+              <div class="loading-spinner"></div>
+              <strong>Carregando mapa operacional</strong>
+              <span>Aguarde alguns segundos.</span>
+            </div>
+
+            <div class="map-empty" id="mapEmpty" hidden>
+              <span class="eyebrow">SEM RECURSOS</span>
+              <h2>Nenhum recurso está cadastrado</h2>
+              <p>Clique em “Adicionar recurso” para incluir a primeira viatura, moto ou guarda.</p>
+            </div>
+
+            <div class="placement-banner" id="placementBanner" hidden>
+              <strong>Escolha a posição</strong>
+              <span>Clique no ponto exato do mapa onde o recurso deverá ficar.</span>
+              <button id="cancelPlacementButton" type="button">Cancelar</button>
+            </div>
+
+            <article class="resource-detail" id="resourceDetail" hidden>
+              <button class="detail-close" id="detailClose" type="button" aria-label="Fechar detalhes">×</button>
+
+              <div class="detail-image">
+                <img id="detailImage" src="" alt="" />
+              </div>
+
+              <div class="detail-copy">
+                <span class="resource-tag" id="detailCategory">Recurso</span>
+                <h2 id="detailName">—</h2>
+                <p id="detailTeam">Sem equipe</p>
+
+                <dl>
+                  <div><dt>Status</dt><dd id="detailStatus">—</dd></div>
+                  <div><dt>Local</dt><dd id="detailAddress">—</dd></div>
+                  <div><dt>Posição</dt><dd id="detailCoordinates">—</dd></div>
+                </dl>
+
+                <div class="detail-actions detail-actions-info">
+                  <strong>Movimentação direta</strong>
+                  <span class="move-help" id="moveHelp">Arraste a própria figura no mapa sem abrir ou usar este cartão.</span>
+                </div>
+
+                <div class="rotation-control">
+                  <div class="rotation-heading">
+                    <strong>Girar figura</strong>
+                    <output id="rotationValue">0°</output>
+                  </div>
+                  <input id="rotationRange" type="range" min="0" max="359" step="1" value="0" />
+                  <div class="rotation-buttons">
+                    <button type="button" id="rotateMinus">−15°</button>
+                    <button type="button" id="rotationReset">Redefinir</button>
+                    <button type="button" id="rotatePlus">+15°</button>
+                  </div>
+                </div>
+
+                <div class="flip-control">
+                  <div class="flip-heading">
+                    <strong>Inverter figura</strong>
+                    <output id="flipValue">Direita</output>
+                  </div>
+
+                  <div class="flip-buttons">
+                    <button type="button" id="flipNormalButton">Direita</button>
+                    <button type="button" id="flipMirrorButton">Esquerda</button>
+                  </div>
+                </div>
+
+                <button class="edit-resource-button" id="editResourceButton" type="button">
+                  Editar dados do recurso
+                </button>
+
+                <button class="delete-resource-button" id="deleteResourceButton" type="button">
+                  Excluir recurso
+                </button>
+              </div>
+            </article>
+
+            <div class="map-status">
+              <span id="mapStatusText">Inicializando mapa...</span>
+              <strong id="currentDateTime">--</strong>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <div class="side-panel-header">
+            <div>
+              <span class="eyebrow">RESUMO</span>
+              <h2>Recursos disponíveis</h2>
+            </div>
+            <button class="icon-button" id="fitAllButton" type="button" title="Mostrar todos no mapa">⛶</button>
+          </div>
+
+          <div class="summary-cards">
+            <article class="summary-card">
+              <span>Total no mapa</span><strong id="summaryTotal">0</strong><small>Recursos cadastrados</small>
+            </article>
+            <article class="summary-card">
+              <span>Em operação</span><strong id="summaryActive">0</strong><small>Visíveis agora</small>
+            </article>
+          </div>
+
+          <div class="resource-list-header">
+            <strong>Recursos no mapa</strong>
+            <button id="refreshButton" type="button">Atualizar</button>
+          </div>
+
+          <div id="resourceList" class="resource-list">
+            <div class="resource-skeleton">Carregando recursos...</div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <button class="print-exit-button" id="printExitButton" type="button" hidden>← Sair do Modo Print</button>
+  <div class="print-hint" id="printHint" hidden>Pressione Esc para retornar</div>
+
+  <div class="toast" id="toast" hidden>
+    <strong id="toastTitle">Concluído</strong>
+    <span id="toastMessage"></span>
+  </div>
+
+  <div class="modal-backdrop" id="resourceModal" hidden>
+    <section class="modal-card resource-form-modal" role="dialog" aria-modal="true" aria-labelledby="resourceModalTitle">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">NOVO CADASTRO</span>
+          <h2 id="resourceModalTitle">Adicionar recurso</h2>
+        </div>
+        <button class="icon-button" id="closeResourceModal" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <form id="resourceForm">
+        <div class="form-grid">
+          <label class="form-field">
+            <span>Tipo do recurso *</span>
+            <select id="resourceType" required>
+              <option value="">Carregando tipos...</option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span>Nome visível no mapa *</span>
+            <input id="resourceName" type="text" placeholder="Ex.: VTR 1540" required />
+          </label>
+
+          <label class="form-field">
+            <span>Prefixo</span>
+            <input id="resourcePrefix" type="text" placeholder="Ex.: 1540" />
+          </label>
+
+          <label class="form-field">
+            <span>Equipe</span>
+            <input id="resourceTeam" type="text" placeholder="Ex.: Equipe Alfa" />
+          </label>
+
+          <label class="form-field">
+            <span>Status</span>
+            <select id="resourceStatus">
+              <option value="em_operacao">Em operação</option>
+              <option value="disponivel">Disponível</option>
+              <option value="indisponivel">Indisponível</option>
+              <option value="manutencao">Em manutenção</option>
+              <option value="fora_de_servico">Fora de serviço</option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span>Endereço ou referência</span>
+            <input id="resourceAddress" type="text" placeholder="Ex.: Praça Sete" />
+          </label>
+
+          <label class="form-field">
+            <span>Latitude *</span>
+            <input id="resourceLatitude" type="number" step="any" placeholder="-19.920800" required />
+          </label>
+
+          <label class="form-field">
+            <span>Longitude *</span>
+            <input id="resourceLongitude" type="number" step="any" placeholder="-43.938600" required />
+          </label>
+        </div>
+
+        <button class="library-shortcut-button" id="openLibraryFromForm" type="button">
+          <span>▧</span>
+          Enviar uma nova imagem ou cadastrar outro tipo de recurso
+        </button>
+
+        <div class="position-actions">
+          <button class="secondary-button" id="selectOnMapButton" type="button">⌖ Selecionar no mapa</button>
+          <button class="secondary-button" id="useMapCenterButton" type="button">Usar centro do mapa</button>
+        </div>
+
+        <p class="form-help">O ponto pode ser ajustado depois arrastando a figura no mapa.</p>
+
+        <div class="modal-form-actions">
+          <button class="secondary-button" id="cancelResourceForm" type="button">Cancelar</button>
+          <button class="primary-button" id="saveResourceButton" type="submit">Salvar recurso</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+
+  <div class="modal-backdrop" id="libraryModal" hidden>
+    <section class="modal-card library-modal" role="dialog" aria-modal="true" aria-labelledby="libraryModalTitle">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">BIBLIOTECA</span>
+          <h2 id="libraryModalTitle">Imagens e tipos de recursos</h2>
+        </div>
+        <button class="icon-button" id="closeLibraryModal" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="library-layout">
+        <form id="resourceTypeForm" class="library-upload-card">
+          <div>
+            <span class="eyebrow">NOVO TIPO</span>
+            <h3>Enviar imagem</h3>
+            <p>Cadastre ônibus, novas viaturas, motos, guardas ou qualquer outro recurso.</p>
+          </div>
+
+          <label class="form-field">
+            <span>Nome do tipo *</span>
+            <input id="typeName" type="text" placeholder="Ex.: Ônibus da GCM" required />
+          </label>
+
+          <label class="form-field">
+            <span>Categoria *</span>
+            <select id="typeCategory" required>
+              <option value="viatura">Viatura</option>
+              <option value="motocicleta">Motocicleta</option>
+              <option value="guarda">Guarda</option>
+              <option value="onibus">Ônibus</option>
+              <option value="base_movel">Base móvel</option>
+              <option value="outro">Outro</option>
+            </select>
+          </label>
+
+          <label class="upload-dropzone" id="uploadDropzone">
+            <input
+              id="typeImageFile"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              required
+            />
+            <span class="upload-icon">⇧</span>
+            <strong>Escolher imagem</strong>
+            <small>PNG, JPG ou WebP — máximo de 10 MB</small>
+          </label>
+
+          <div class="image-preview-box" id="imagePreviewBox">
+            <span id="imagePreviewPlaceholder">A imagem aparecerá aqui</span>
+            <img id="typeImagePreview" src="" alt="Pré-visualização" hidden />
+          </div>
+
+          <div class="dimension-grid">
+            <label class="form-field">
+              <span>Largura no mapa</span>
+              <input id="typeWidth" type="number" min="24" max="240" value="120" required />
+            </label>
+
+            <label class="form-field">
+              <span>Altura no mapa</span>
+              <input id="typeHeight" type="number" min="24" max="240" value="75" required />
+            </label>
+          </div>
+
+          <p class="form-help">
+            A imagem ficará presa ao ponto geográfico e não mudará de tamanho durante o zoom.
+          </p>
+
+          <button class="primary-button full-width" id="saveResourceTypeButton" type="submit">
+            Enviar imagem e salvar tipo
+          </button>
+        </form>
+
+        <section class="library-items-panel">
+          <div class="library-items-header">
+            <div>
+              <span class="eyebrow">DISPONÍVEIS</span>
+              <h3>Tipos cadastrados</h3>
+            </div>
+            <strong id="libraryTypeCount">0</strong>
+          </div>
+
+          <div class="library-items" id="libraryItems">
+            <div class="resource-skeleton">Carregando biblioteca...</div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
+
+
+  <div class="modal-backdrop" id="editResourceModal" hidden>
+    <section class="modal-card resource-form-modal" role="dialog" aria-modal="true" aria-labelledby="editResourceModalTitle">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">EDIÇÃO</span>
+          <h2 id="editResourceModalTitle">Editar recurso</h2>
+        </div>
+        <button class="icon-button" id="closeEditResourceModal" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <form id="editResourceForm">
+        <div class="form-grid">
+          <label class="form-field">
+            <span>Tipo do recurso *</span>
+            <select id="editResourceType" required>
+              <option value="">Carregando tipos...</option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span>Nome visível no mapa *</span>
+            <input id="editResourceName" type="text" required />
+          </label>
+
+          <label class="form-field">
+            <span>Prefixo</span>
+            <input id="editResourcePrefix" type="text" />
+          </label>
+
+          <label class="form-field">
+            <span>Equipe</span>
+            <input id="editResourceTeam" type="text" />
+          </label>
+
+          <label class="form-field">
+            <span>Status</span>
+            <select id="editResourceStatus">
+              <option value="em_operacao">Em operação</option>
+              <option value="disponivel">Disponível</option>
+              <option value="indisponivel">Indisponível</option>
+              <option value="manutencao">Em manutenção</option>
+              <option value="fora_de_servico">Fora de serviço</option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span>Endereço ou referência</span>
+            <input id="editResourceAddress" type="text" />
+          </label>
+        </div>
+
+        <p class="form-help">
+          A posição, rotação e lado da figura não serão alterados.
+        </p>
+
+        <div class="modal-form-actions">
+          <button class="secondary-button" id="cancelEditResource" type="button">Cancelar</button>
+          <button class="primary-button" id="saveEditResourceButton" type="submit">Salvar alterações</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+
+  <div class="modal-backdrop" id="visualSettingsModal" hidden>
+    <section class="modal-card visual-settings-modal" role="dialog" aria-modal="true" aria-labelledby="visualSettingsTitle">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">AJUSTES VISUAIS</span>
+          <h2 id="visualSettingsTitle">Aparência do mapa</h2>
+        </div>
+
+        <button class="icon-button" id="closeVisualSettings" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <form id="visualSettingsForm">
+        <div class="settings-preview">
+          <span class="eyebrow">PRÉ-VISUALIZAÇÃO</span>
+
+          <div class="settings-preview-stage">
+            <div class="settings-preview-resource" id="settingsPreviewResource">
+              <div class="settings-preview-image">
+                <span>VTR</span>
+              </div>
+
+              <strong id="settingsPreviewLabel">VTR 1533</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-settings-grid">
+          <label class="range-setting">
+            <span class="range-setting-heading">
+              <strong>Tamanho máximo das figuras</strong>
+              <output id="maxIconSizeValue">100%</output>
+            </span>
+
+            <input
+              id="maxIconSizeRange"
+              type="range"
+              min="50"
+              max="160"
+              step="5"
+              value="100"
+            />
+
+            <small>Tamanho utilizado quando o mapa estiver bem aproximado.</small>
+          </label>
+
+          <label class="range-setting">
+            <span class="range-setting-heading">
+              <strong>Tamanho com o mapa afastado</strong>
+              <output id="minIconSizeValue">38%</output>
+            </span>
+
+            <input
+              id="minIconSizeRange"
+              type="range"
+              min="20"
+              max="80"
+              step="2"
+              value="38"
+            />
+
+            <small>As figuras diminuem até este limite, sem sair da coordenada.</small>
+          </label>
+
+          <label class="range-setting">
+            <span class="range-setting-heading">
+              <strong>Tamanho dos nomes</strong>
+              <output id="labelSizeValue">12 px</output>
+            </span>
+
+            <input
+              id="labelSizeRange"
+              type="range"
+              min="8"
+              max="22"
+              step="1"
+              value="12"
+            />
+
+            <small>Controla o texto das etiquetas visíveis no mapa.</small>
+          </label>
+
+          <label class="toggle-setting">
+            <span>
+              <strong>Mostrar nomes dos recursos</strong>
+              <small>Recomendado para o Modo Print e capturas de tela.</small>
+            </span>
+
+            <input id="showLabelsToggle" type="checkbox" checked />
+          </label>
+        </div>
+
+        <div class="settings-note">
+          <strong>Importante:</strong>
+          as alterações serão aplicadas a todas as viaturas, motos, guardas, ônibus e imagens enviadas à Biblioteca.
+        </div>
+
+        <div class="modal-form-actions">
+          <button class="secondary-button" id="resetVisualSettings" type="button">Restaurar padrão</button>
+          <button class="secondary-button" id="cancelVisualSettings" type="button">Cancelar</button>
+          <button class="primary-button" id="saveVisualSettings" type="submit">Salvar ajustes</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+window.APP_CONFIG = Object.freeze({
+  supabaseUrl: "https://fpulmoldrdzfkjscexpy.supabase.co",
+  supabasePublishableKey: "sb_publishable_wKgayC9h02k-gkT9vU7AcQ_wrgWO9zi",
+  storageBucket: "recursos-mapa",
+
+  themeStorageKey: "mapa_operacional_theme",
+  sidebarStorageKey: "mapa_operacional_sidebar",
+
+  mapStyles: {
+    light: "https://tiles.openfreemap.org/styles/positron",
+    dark: "https://tiles.openfreemap.org/styles/dark"
+  },
+
+  mapFallback: {
+    center: [-43.9386, -19.9208],
+    zoom: 12.5,
+    minZoom: 10,
+    maxZoom: 20,
+    maxBounds: [
+      [-44.12, -20.06],
+      [-43.80, -19.78]
+    ]
+  },
+
+  markerLayout: {
+    collisionDistance: 118,
+    baseRadius: 72,
+    ringGap: 62
+  }
+});
+
+
+(() => {
+  const config = window.APP_CONFIG;
+
+  if (!config) {
+    throw new Error("APP_CONFIG não foi carregado.");
+  }
+
+  if (!window.supabase?.createClient) {
+    throw new Error("A biblioteca do Supabase não foi carregada.");
+  }
+
+  const client = window.supabase.createClient(
+    config.supabaseUrl,
+    config.supabasePublishableKey,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    }
+  );
+
+  async function loadMapSettings() {
+    const { data, error } = await client
+      .from("mapa_configuracoes")
+      .select("*")
+      .eq("id", 1)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async function updateMapSettings(payload) {
+    const { data, error } = await client
+      .from("mapa_configuracoes")
+      .update({
+        tamanho_icones_percentual: payload.iconPercent,
+        tamanho_minimo_icones_percentual: payload.minIconPercent,
+        tamanho_etiqueta: payload.labelSize,
+        mostrar_nomes: payload.showLabels
+      })
+      .eq("id", 1)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async function loadResourceTypes() {
+    const { data, error } = await client
+      .from("tipos_recursos")
+      .select(`
+        id,
+        nome,
+        categoria,
+        imagem_path,
+        largura_marcador,
+        altura_marcador,
+        ancora_marcador,
+        ativo,
+        ordem
+      `)
+      .eq("ativo", true)
+      .order("ordem", { ascending: true })
+      .order("nome", { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function loadOperationalResources() {
+    const { data, error } = await client
+      .from("recursos_operacionais")
+      .select(`
+        id,
+        nome_exibicao,
+        prefixo,
+        status,
+        latitude,
+        longitude,
+        rotacao_graus,
+        invertido_horizontal,
+        endereco,
+        observacoes,
+        inicio_em,
+        fim_em,
+        visivel_no_mapa,
+        ativo,
+        posicao_etiqueta,
+        deslocamento_etiqueta_x,
+        deslocamento_etiqueta_y,
+        ordem_sobreposicao,
+        tipo_recurso:tipos_recursos (
+          id,
+          nome,
+          categoria,
+          imagem_path,
+          largura_marcador,
+          altura_marcador,
+          deslocamento_x,
+          deslocamento_y,
+          ancora_marcador,
+          ativo
+        ),
+        equipe:equipes (
+          id,
+          nome,
+          cor,
+          ativo
+        )
+      `)
+      .eq("ativo", true)
+      .eq("visivel_no_mapa", true)
+      .order("ordem_sobreposicao", { ascending: true })
+      .order("nome_exibicao", { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function resolveTeamId(teamName) {
+    const name = String(teamName || "").trim();
+    if (!name) return null;
+
+    const { data: existing, error: findError } = await client
+      .from("equipes")
+      .select("id")
+      .ilike("nome", name)
+      .limit(1)
+      .maybeSingle();
+
+    if (findError) throw findError;
+    if (existing?.id) return existing.id;
+
+    const { data: created, error: insertError } = await client
+      .from("equipes")
+      .insert({ nome: name, ativo: true })
+      .select("id")
+      .single();
+
+    if (insertError) throw insertError;
+    return created.id;
+  }
+
+  async function createOperationalResource(payload) {
+    const equipeId = await resolveTeamId(payload.teamName);
+
+    const { data, error } = await client
+      .from("recursos_operacionais")
+      .insert({
+        tipo_recurso_id: payload.typeId,
+        equipe_id: equipeId,
+        nome_exibicao: payload.name,
+        prefixo: payload.prefix || null,
+        status: payload.status || "em_operacao",
+        latitude: payload.latitude,
+        longitude: payload.longitude,
+        endereco: payload.address || null,
+        rotacao_graus: 0,
+        invertido_horizontal: false,
+        visivel_no_mapa: true,
+        ativo: true
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async function deleteOperationalResource(id) {
+    const { error } = await client
+      .from("recursos_operacionais")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+  }
+
+  async function updateResourcePosition(id, latitude, longitude) {
+    const { error } = await client
+      .from("recursos_operacionais")
+      .update({ latitude, longitude })
+      .eq("id", id);
+
+    if (error) throw error;
+  }
+
+  async function updateResourceRotation(id, rotation) {
+    const normalized = ((Number(rotation) % 360) + 360) % 360;
+
+    const { error } = await client
+      .from("recursos_operacionais")
+      .update({ rotacao_graus: Math.round(normalized) })
+      .eq("id", id);
+
+    if (error) throw error;
+  }
+
+  async function updateResourceFlip(id, flipped) {
+    const { error } = await client
+      .from("recursos_operacionais")
+      .update({ invertido_horizontal: Boolean(flipped) })
+      .eq("id", id);
+
+    if (error) throw error;
+  }
+
+  function sanitizeFilename(value) {
+    return String(value || "recurso")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "recurso";
+  }
+
+  async function nextTypeOrder() {
+    const { data, error } = await client
+      .from("tipos_recursos")
+      .select("ordem")
+      .order("ordem", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    return Number(data?.ordem || 0) + 1;
+  }
+
+  async function createResourceType(payload) {
+    const file = payload.file;
+
+    if (!file) throw new Error("Selecione uma imagem.");
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error("Use uma imagem PNG, JPG ou WebP.");
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error("A imagem deve ter no máximo 10 MB.");
+    }
+
+    const extension =
+      file.type === "image/png"
+        ? "png"
+        : file.type === "image/webp"
+          ? "webp"
+          : "jpg";
+
+    const uniquePart =
+      globalThis.crypto?.randomUUID?.() ||
+      `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    const path = `personalizados/${sanitizeFilename(payload.name)}-${uniquePart}.${extension}`;
+
+    const { error: uploadError } = await client.storage
+      .from(config.storageBucket)
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type
+      });
+
+    if (uploadError) throw uploadError;
+
+    try {
+      const order = await nextTypeOrder();
+
+      const { data, error: insertError } = await client
+        .from("tipos_recursos")
+        .insert({
+          nome: payload.name,
+          categoria: payload.category,
+          imagem_path: path,
+          largura_marcador: payload.width,
+          altura_marcador: payload.height,
+          deslocamento_x: 0,
+          deslocamento_y: 0,
+          ancora_marcador: "center",
+          ativo: true,
+          ordem: order
+        })
+        .select(`
+          id,
+          nome,
+          categoria,
+          imagem_path,
+          largura_marcador,
+          altura_marcador,
+          ancora_marcador,
+          ativo,
+          ordem
+        `)
+        .single();
+
+      if (insertError) throw insertError;
+      return data;
+    } catch (error) {
+      await client.storage.from(config.storageBucket).remove([path]);
+      throw error;
+    }
+  }
+
+  async function updateOperationalResource(id, payload) {
+    const equipeId = await resolveTeamId(payload.teamName);
+
+    const { error } = await client
+      .from("recursos_operacionais")
+      .update({
+        tipo_recurso_id: payload.typeId,
+        equipe_id: equipeId,
+        nome_exibicao: payload.name,
+        prefixo: payload.prefix || null,
+        status: payload.status || "em_operacao",
+        endereco: payload.address || null
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+  }
+
+  function publicImageUrl(path) {
+    if (!path) return "";
+    return client.storage.from(config.storageBucket).getPublicUrl(path).data.publicUrl;
+  }
+
+  window.SupabaseService = Object.freeze({
+    client,
+    loadMapSettings,
+    updateMapSettings,
+    loadResourceTypes,
+    loadOperationalResources,
+    createOperationalResource,
+    deleteOperationalResource,
+    updateResourcePosition,
+    updateResourceRotation,
+    updateResourceFlip,
+    updateOperationalResource,
+    createResourceType,
+    publicImageUrl
+  });
+})();
+
+
+(() => {
+  const config = window.APP_CONFIG;
+
+  let map = null;
+  let currentTheme = "light";
+  let mapSettings = null;
+  let resources = [];
+  let filteredResources = [];
+  let selectedId = null;
+  let markerRecords = new Map();
+  let layoutFrame = null;
+  let placementCallback = null;
+
+  let onSelectCallback = null;
+  let onPositionChangeCallback = null;
+  let onMoveStateCallback = null;
+  let onActionErrorCallback = null;
+
+  function normalizeSettings(settings) {
+    const fallback = config.mapFallback;
+    return {
+      center: [
+        Number(settings?.centro_longitude ?? fallback.center[0]),
+        Number(settings?.centro_latitude ?? fallback.center[1])
+      ],
+      zoom: Number(settings?.zoom_inicial ?? fallback.zoom),
+      minZoom: Number(settings?.zoom_minimo ?? fallback.minZoom),
+      maxZoom: Number(settings?.zoom_maximo ?? fallback.maxZoom),
+      maxBounds: fallback.maxBounds,
+      iconPercent: Math.max(
+        50,
+        Math.min(
+          160,
+          Number(settings?.tamanho_icones_percentual ?? 100)
+        )
+      ),
+      minIconPercent: Math.max(
+        20,
+        Math.min(
+          80,
+          Number(settings?.tamanho_minimo_icones_percentual ?? 38)
+        )
+      ),
+      labelSize: Math.max(
+        8,
+        Math.min(
+          22,
+          Number(settings?.tamanho_etiqueta ?? 12)
+        )
+      ),
+      showLabels: settings?.mostrar_nomes !== false
+    };
+  }
+
+  function init(options) {
+    mapSettings = normalizeSettings(options.settings);
+    currentTheme = options.theme === "dark" ? "dark" : "light";
+
+    onSelectCallback =
+      typeof options.onSelect === "function" ? options.onSelect : null;
+    onPositionChangeCallback =
+      typeof options.onPositionChange === "function"
+        ? options.onPositionChange
+        : null;
+    onMoveStateCallback =
+      typeof options.onMoveState === "function"
+        ? options.onMoveState
+        : null;
+    onActionErrorCallback =
+      typeof options.onActionError === "function"
+        ? options.onActionError
+        : null;
+
+    map = new maplibregl.Map({
+      container: "map",
+      style: config.mapStyles[currentTheme],
+      center: mapSettings.center,
+      zoom: mapSettings.zoom,
+      minZoom: mapSettings.minZoom,
+      maxZoom: mapSettings.maxZoom,
+      maxBounds: mapSettings.maxBounds,
+      pitch: 0,
+      bearing: 0,
+      attributionControl: true
+    });
+
+    map.addControl(
+      new maplibregl.NavigationControl({
+        showCompass: false,
+        visualizePitch: false
+      }),
+      "top-right"
+    );
+
+    map.on("load", () => {
+      updateVisualScale();
+      options.onReady?.();
+      scheduleLabelLayout();
+    });
+
+    map.on("moveend", scheduleLabelLayout);
+    map.on("zoom", updateVisualScale);
+    map.on("zoomend", () => {
+      updateVisualScale();
+      scheduleLabelLayout();
+    });
+    map.on("resize", scheduleLabelLayout);
+
+    map.on("click", (event) => {
+      if (!placementCallback) return;
+      const callback = placementCallback;
+      placementCallback = null;
+      callback({
+        latitude: event.lngLat.lat,
+        longitude: event.lngLat.lng
+      });
+    });
+
+    map.on("error", (event) => {
+      console.error("Erro do mapa:", event?.error || event);
+      options.onError?.(event?.error || event);
+    });
+
+    return map;
+  }
+
+  function setTheme(theme) {
+    const finalTheme = theme === "dark" ? "dark" : "light";
+    if (!map || finalTheme === currentTheme) {
+      currentTheme = finalTheme;
+      return;
+    }
+    currentTheme = finalTheme;
+    map.setStyle(config.mapStyles[finalTheme]);
+  }
+
+  function isVisibleBySchedule(resource) {
+    const now = Date.now();
+    const start = resource.inicio_em ? new Date(resource.inicio_em).getTime() : null;
+    const end = resource.fim_em ? new Date(resource.fim_em).getTime() : null;
+    if (Number.isFinite(start) && now < start) return false;
+    if (Number.isFinite(end) && now > end) return false;
+    return true;
+  }
+
+  function setResources(nextResources) {
+    resources = (nextResources || []).filter(
+      (resource) =>
+        resource &&
+        Number.isFinite(Number(resource.latitude)) &&
+        Number.isFinite(Number(resource.longitude)) &&
+        resource.tipo_recurso &&
+        resource.tipo_recurso.ativo !== false &&
+        isVisibleBySchedule(resource)
+    );
+
+    filteredResources = [...resources];
+    selectedId = null;
+    syncMarkers();
+  }
+
+  function setFilteredResources(nextResources) {
+    filteredResources = [...(nextResources || [])];
+    syncMarkers();
+  }
+
+  function syncMarkers() {
+    if (!map) return;
+
+    const visibleIds = new Set(filteredResources.map((item) => item.id));
+
+    for (const [id, record] of markerRecords) {
+      if (!visibleIds.has(id)) {
+        record.imageMarker.remove();
+        record.labelMarker.remove();
+        markerRecords.delete(id);
+      }
+    }
+
+    for (const resource of filteredResources) {
+      if (markerRecords.has(resource.id)) {
+        updateMarkerRecord(markerRecords.get(resource.id), resource);
+      } else {
+        createMarkerRecord(resource);
+      }
+    }
+
+    scheduleLabelLayout();
+  }
+
+  function createMarkerRecord(resource) {
+    const category = resource.tipo_recurso?.categoria || "outro";
+
+    const anchorElement = document.createElement("button");
+    anchorElement.type = "button";
+    anchorElement.className = `resource-anchor-marker auto-draggable category-${category}`;
+    anchorElement.dataset.resourceId = resource.id;
+    anchorElement.title = resource.nome_exibicao;
+
+    anchorElement.innerHTML = `
+      <span class="resource-visual">
+        <img alt="" />
+        <span class="marker-status"></span>
+      </span>
+    `;
+
+    const labelElement = document.createElement("button");
+    labelElement.type = "button";
+    labelElement.className = "resource-label-marker";
+    labelElement.dataset.resourceId = resource.id;
+    labelElement.innerHTML = `
+      <span class="label-connector"></span>
+      <span class="label-text"></span>
+    `;
+
+    const lngLat = [
+      Number(resource.longitude),
+      Number(resource.latitude)
+    ];
+
+    const imageMarker = new maplibregl.Marker({
+      element: anchorElement,
+      anchor: "center",
+      draggable: true,
+      subpixelPositioning: true
+    })
+      .setLngLat(lngLat)
+      .addTo(map);
+
+    const labelMarker = new maplibregl.Marker({
+      element: labelElement,
+      anchor: "center",
+      draggable: false,
+      subpixelPositioning: true
+    })
+      .setLngLat(lngLat)
+      .addTo(map);
+
+    const record = {
+      resource,
+      imageMarker,
+      labelMarker,
+      anchorElement,
+      labelElement,
+      dragOrigin: null,
+      suppressNextClick: false,
+      suppressTimer: null
+    };
+
+    anchorElement.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (record.suppressNextClick) return;
+      selectResource(resource.id, false);
+    });
+
+    labelElement.addEventListener("click", (event) => {
+      event.stopPropagation();
+      selectResource(resource.id, true);
+    });
+
+    imageMarker.on("dragstart", () => {
+      record.dragOrigin = imageMarker.getLngLat();
+      record.suppressNextClick = true;
+      clearTimeout(record.suppressTimer);
+      anchorElement.classList.add("move-enabled");
+      onMoveStateCallback?.(resource, "dragging");
+    });
+
+    imageMarker.on("drag", () => {
+      labelMarker.setLngLat(imageMarker.getLngLat());
+      scheduleLabelLayout();
+    });
+
+    imageMarker.on("dragend", async () => {
+      const position = imageMarker.getLngLat();
+
+      try {
+        await onPositionChangeCallback?.(resource, {
+          latitude: position.lat,
+          longitude: position.lng
+        });
+
+        resource.latitude = position.lat;
+        resource.longitude = position.lng;
+        labelMarker.setLngLat(position);
+        onMoveStateCallback?.(resource, "saved");
+      } catch (error) {
+        console.error("Erro ao salvar posição:", error);
+
+        if (record.dragOrigin) {
+          imageMarker.setLngLat(record.dragOrigin);
+          labelMarker.setLngLat(record.dragOrigin);
+        }
+
+        onActionErrorCallback?.("Não foi possível salvar a nova posição.");
+        onMoveStateCallback?.(resource, "error");
+      } finally {
+        record.dragOrigin = null;
+        anchorElement.classList.remove("move-enabled");
+        scheduleLabelLayout();
+
+        record.suppressTimer = setTimeout(() => {
+          record.suppressNextClick = false;
+        }, 220);
+      }
+    });
+
+    markerRecords.set(resource.id, record);
+    updateMarkerRecord(record, resource);
+  }
+
+  function updateMarkerRecord(record, resource) {
+    record.resource = resource;
+    const type = resource.tipo_recurso || {};
+    const category = type.categoria || "outro";
+    const fixedScale = Number(mapSettings?.iconPercent || 100) / 100;
+
+    const width =
+      Math.max(24, Number(type.largura_marcador) || 90) * fixedScale;
+    const height =
+      Math.max(24, Number(type.altura_marcador) || 70) * fixedScale;
+
+    record.anchorElement.className =
+      `resource-anchor-marker auto-draggable category-${category}`;
+
+    const visual = record.anchorElement.querySelector(".resource-visual");
+
+    record.baseWidth = width;
+    record.baseHeight = height;
+
+    visual.style.setProperty(
+      "--visual-rotation",
+      `${normalizeRotation(resource.rotacao_graus)}deg`
+    );
+    visual.style.setProperty(
+      "--visual-flip",
+      resource.invertido_horizontal ? "-1" : "1"
+    );
+
+    const image = visual.querySelector("img");
+    image.src = window.SupabaseService.publicImageUrl(type.imagem_path);
+    image.alt = type.nome || resource.nome_exibicao || "Recurso";
+
+    visual.querySelector(".marker-status").className =
+      `marker-status ${resource.status || ""}`;
+
+    const label = record.labelElement.querySelector(".label-text");
+    label.textContent = resource.nome_exibicao || resource.prefixo || "Recurso";
+    label.style.fontSize = `${Math.max(9, Number(mapSettings?.labelSize || 12))}px`;
+
+    const lngLat = [Number(resource.longitude), Number(resource.latitude)];
+    record.imageMarker.setLngLat(lngLat);
+    record.labelMarker.setLngLat(lngLat);
+
+    const selected = resource.id === selectedId;
+    record.anchorElement.classList.toggle("selected", selected);
+    record.labelElement.classList.toggle("selected", selected);
+    record.labelElement.hidden = !mapSettings.showLabels;
+
+    applyScaleToRecord(record, getZoomScale());
+  }
+
+  function getZoomScale() {
+    if (!map) return 1;
+
+    const zoom = map.getZoom();
+    const minimumZoom = Number(mapSettings?.minZoom || 10);
+    const fullSizeZoom = 16;
+
+    const progress = Math.max(
+      0,
+      Math.min(
+        1,
+        (zoom - minimumZoom) /
+          Math.max(1, fullSizeZoom - minimumZoom)
+      )
+    );
+
+    const maximumPercent =
+      Math.max(1, Number(mapSettings?.iconPercent || 100));
+
+    const minimumPercent =
+      Math.min(
+        maximumPercent,
+        Math.max(
+          1,
+          Number(mapSettings?.minIconPercent || 38)
+        )
+      );
+
+    const minimumScale =
+      minimumPercent / maximumPercent;
+
+    return minimumScale +
+      progress * (1 - minimumScale);
+  }
+
+  function applyScaleToRecord(record, scale) {
+    const visual =
+      record.anchorElement.querySelector(".resource-visual");
+
+    const width =
+      Math.max(16, Number(record.baseWidth || 90) * scale);
+
+    const height =
+      Math.max(16, Number(record.baseHeight || 70) * scale);
+
+    visual.style.setProperty(
+      "--visual-width",
+      `${width.toFixed(2)}px`
+    );
+
+    visual.style.setProperty(
+      "--visual-height",
+      `${height.toFixed(2)}px`
+    );
+
+    record.currentScale = scale;
+  }
+
+  function updateVisualScale() {
+    if (!map) return;
+
+    const scale = getZoomScale();
+
+    for (const record of markerRecords.values()) {
+      applyScaleToRecord(record, scale);
+    }
+  }
+
+  function applyVisualSettings(settings) {
+    mapSettings = {
+      ...mapSettings,
+      iconPercent: Math.max(
+        50,
+        Math.min(
+          160,
+          Number(settings?.iconPercent ?? mapSettings?.iconPercent ?? 100)
+        )
+      ),
+      minIconPercent: Math.max(
+        20,
+        Math.min(
+          80,
+          Number(
+            settings?.minIconPercent ??
+            mapSettings?.minIconPercent ??
+            38
+          )
+        )
+      ),
+      labelSize: Math.max(
+        8,
+        Math.min(
+          22,
+          Number(settings?.labelSize ?? mapSettings?.labelSize ?? 12)
+        )
+      ),
+      showLabels: settings?.showLabels !== false
+    };
+
+    document.body.classList.toggle(
+      "labels-hidden",
+      !mapSettings.showLabels
+    );
+
+    for (const record of markerRecords.values()) {
+      updateMarkerRecord(record, record.resource);
+    }
+
+    updateVisualScale();
+    scheduleLabelLayout();
+  }
+
+  function normalizeRotation(value) {
+    return ((Number(value || 0) % 360) + 360) % 360;
+  }
+
+  function setVisualRotation(record, rotation) {
+    record.anchorElement
+      .querySelector(".resource-visual")
+      .style.setProperty(
+        "--visual-rotation",
+        `${normalizeRotation(rotation)}deg`
+      );
+  }
+
+  function setVisualFlip(record, flipped) {
+    record.anchorElement
+      .querySelector(".resource-visual")
+      .style.setProperty(
+        "--visual-flip",
+        flipped ? "-1" : "1"
+      );
+  }
+
+  function previewRotation(id, rotation) {
+    const record = markerRecords.get(id);
+    if (!record) return;
+    setVisualRotation(record, rotation);
+  }
+
+  function commitRotation(id, rotation) {
+    const record = markerRecords.get(id);
+    if (!record) return;
+    const normalized = normalizeRotation(rotation);
+    record.resource.rotacao_graus = normalized;
+    setVisualRotation(record, normalized);
+  }
+
+  function previewFlip(id, flipped) {
+    const record = markerRecords.get(id);
+    if (!record) return;
+    setVisualFlip(record, flipped);
+  }
+
+  function commitFlip(id, flipped) {
+    const record = markerRecords.get(id);
+    if (!record) return;
+    record.resource.invertido_horizontal = Boolean(flipped);
+    setVisualFlip(record, Boolean(flipped));
+  }
+
+  function isDraggingEnabled(id) {
+    return Boolean(markerRecords.get(id)?.imageMarker.isDraggable());
+  }
+
+  function enableDragging(id, enabled) {
+    // Mantido por compatibilidade com versões anteriores.
+    const record = markerRecords.get(id);
+    if (!record) return;
+    record.imageMarker.setDraggable(Boolean(enabled));
+    record.anchorElement.classList.toggle("move-enabled", Boolean(enabled));
+  }
+
+  function scheduleLabelLayout() {
+    if (layoutFrame) cancelAnimationFrame(layoutFrame);
+    layoutFrame = requestAnimationFrame(() => {
+      layoutFrame = null;
+      layoutLabels();
+    });
+  }
+
+  function layoutLabels() {
+    if (
+      !map ||
+      !markerRecords.size ||
+      !mapSettings?.showLabels
+    ) {
+      return;
+    }
+
+    const records = [...markerRecords.values()].map((record) => ({
+      ...record,
+      point: map.project([
+        Number(record.resource.longitude),
+        Number(record.resource.latitude)
+      ])
+    }));
+
+    const groups = buildCollisionGroups(
+      records,
+      config.markerLayout.collisionDistance
+    );
+
+    for (const group of groups) {
+      const offsets = calculateLabelOffsets(group);
+
+      group.forEach((record, index) => {
+        const manualX = Number(record.resource.deslocamento_etiqueta_x || 0);
+        const manualY = Number(record.resource.deslocamento_etiqueta_y || 0);
+
+        applyLabelOffset(record, [
+          offsets[index][0] + manualX,
+          offsets[index][1] + manualY
+        ]);
+      });
+    }
+  }
+
+  function buildCollisionGroups(records, distance) {
+    const groups = [];
+    const visited = new Set();
+
+    for (let index = 0; index < records.length; index += 1) {
+      if (visited.has(index)) continue;
+
+      const queue = [index];
+      const group = [];
+      visited.add(index);
+
+      while (queue.length) {
+        const currentIndex = queue.shift();
+        const current = records[currentIndex];
+        group.push(current);
+
+        for (let otherIndex = 0; otherIndex < records.length; otherIndex += 1) {
+          if (visited.has(otherIndex)) continue;
+
+          const other = records[otherIndex];
+          const currentDistance = Math.hypot(
+            current.point.x - other.point.x,
+            current.point.y - other.point.y
+          );
+
+          if (currentDistance <= distance) {
+            visited.add(otherIndex);
+            queue.push(otherIndex);
+          }
+        }
+      }
+
+      groups.push(group);
+    }
+
+    return groups;
+  }
+
+  function calculateLabelOffsets(group) {
+    if (group.length === 1) {
+      const type = group[0].resource.tipo_recurso || {};
+      const category = type.categoria || "outro";
+      const baseHeight =
+        Math.max(24, Number(type.altura_marcador) || 70);
+
+      const height =
+        baseHeight * Number(group[0].currentScale || getZoomScale());
+
+      const y =
+        category === "guarda"
+          ? -(height + 22)
+          : -(height / 2 + 30);
+
+      return [[0, Math.round(y)]];
+    }
+
+    const radius = Math.max(82, config.markerLayout.baseRadius);
+
+    return group.map((record, index) => {
+      const angle = -Math.PI / 2 + (Math.PI * 2 * index) / group.length;
+      return [
+        Math.round(Math.cos(angle) * radius),
+        Math.round(Math.sin(angle) * radius)
+      ];
+    });
+  }
+
+  function applyLabelOffset(record, offset) {
+    const [x, y] = offset;
+    record.labelMarker.setOffset(offset);
+
+    const length = Math.hypot(x, y);
+    const connectorLength = Math.max(0, length - 27);
+    const angle = Math.atan2(-y, -x) * (180 / Math.PI);
+
+    record.labelElement.classList.toggle(
+      "has-connector",
+      connectorLength > 42
+    );
+
+    record.labelElement.style.setProperty(
+      "--connector-length",
+      `${connectorLength}px`
+    );
+    record.labelElement.style.setProperty(
+      "--connector-angle",
+      `${angle}deg`
+    );
+  }
+
+  function selectResource(id, centerMap = false) {
+    selectedId = id || null;
+
+    for (const record of markerRecords.values()) {
+      const selected = record.resource.id === selectedId;
+      record.anchorElement.classList.toggle("selected", selected);
+      record.labelElement.classList.toggle("selected", selected);
+    }
+
+    const selected =
+      resources.find((item) => item.id === selectedId) || null;
+
+    if (selected && centerMap && map) {
+      map.easeTo({
+        center: [
+          Number(selected.longitude),
+          Number(selected.latitude)
+        ],
+        zoom: Math.max(map.getZoom(), 15),
+        duration: 600
+      });
+    }
+
+    onSelectCallback?.(selected);
+  }
+
+  function fitAll() {
+    if (!map || !filteredResources.length) return;
+
+    if (filteredResources.length === 1) {
+      const item = filteredResources[0];
+      map.easeTo({
+        center: [Number(item.longitude), Number(item.latitude)],
+        zoom: 16,
+        duration: 600
+      });
+      return;
+    }
+
+    const bounds = new maplibregl.LngLatBounds();
+
+    for (const item of filteredResources) {
+      bounds.extend([Number(item.longitude), Number(item.latitude)]);
+    }
+
+    map.fitBounds(bounds, {
+      padding: {
+        top: 100,
+        right: 120,
+        bottom: 120,
+        left: 120
+      },
+      maxZoom: 15.5,
+      duration: 700
+    });
+  }
+
+  function startPlacement(callback) {
+    placementCallback = callback;
+  }
+
+  function cancelPlacement() {
+    placementCallback = null;
+  }
+
+  function getCenter() {
+    const center = map.getCenter();
+    return {
+      latitude: center.lat,
+      longitude: center.lng
+    };
+  }
+
+  function resize() {
+    setTimeout(() => {
+      map?.resize();
+      scheduleLabelLayout();
+    }, 50);
+  }
+
+  window.MapModule = Object.freeze({
+    init,
+    setTheme,
+    setResources,
+    setFilteredResources,
+    selectResource,
+    fitAll,
+    resize,
+    applyVisualSettings,
+    previewRotation,
+    commitRotation,
+    previewFlip,
+    commitFlip,
+    enableDragging,
+    isDraggingEnabled,
+    startPlacement,
+    cancelPlacement,
+    getCenter
+  });
+})();
+
+
+(() => {
+  const config = window.APP_CONFIG;
+  const root = document.documentElement;
+  const body = document.body;
+
+  const byId = (name) => document.getElementById(name);
+
+  const els = {
+    appShell: byId("appShell"),
+    sidebarToggle: byId("sidebarToggle"),
+    libraryNavButton: byId("libraryNavButton"),
+    settingsNavButton: byId("settingsNavButton"),
+    themeToggle: byId("themeToggle"),
+    themeIcon: byId("themeIcon"),
+    themeText: byId("themeText"),
+    printModeButton: byId("printModeButton"),
+    printExitButton: byId("printExitButton"),
+    printHint: byId("printHint"),
+    addResourceButton: byId("addResourceButton"),
+    currentDateTime: byId("currentDateTime"),
+    mapStage: byId("mapStage"),
+    mapStatusText: byId("mapStatusText"),
+    mapLoading: byId("mapLoading"),
+    mapEmpty: byId("mapEmpty"),
+    resourceTotal: byId("resourceTotal"),
+    summaryTotal: byId("summaryTotal"),
+    summaryActive: byId("summaryActive"),
+    resourceList: byId("resourceList"),
+    globalSearch: byId("globalSearch"),
+    categoryFilters: byId("categoryFilters"),
+    fitAllButton: byId("fitAllButton"),
+    refreshButton: byId("refreshButton"),
+    connectionDot: byId("connectionDot"),
+    connectionTitle: byId("connectionTitle"),
+    connectionSubtitle: byId("connectionSubtitle"),
+
+    resourceDetail: byId("resourceDetail"),
+    detailClose: byId("detailClose"),
+    detailImage: byId("detailImage"),
+    detailCategory: byId("detailCategory"),
+    detailName: byId("detailName"),
+    detailTeam: byId("detailTeam"),
+    detailStatus: byId("detailStatus"),
+    detailAddress: byId("detailAddress"),
+    detailCoordinates: byId("detailCoordinates"),
+    moveHelp: byId("moveHelp"),
+    rotationRange: byId("rotationRange"),
+    rotationValue: byId("rotationValue"),
+    rotateMinus: byId("rotateMinus"),
+    rotatePlus: byId("rotatePlus"),
+    rotationReset: byId("rotationReset"),
+    flipValue: byId("flipValue"),
+    flipNormalButton: byId("flipNormalButton"),
+    flipMirrorButton: byId("flipMirrorButton"),
+    editResourceButton: byId("editResourceButton"),
+    deleteResourceButton: byId("deleteResourceButton"),
+
+    toast: byId("toast"),
+    toastTitle: byId("toastTitle"),
+    toastMessage: byId("toastMessage"),
+
+    resourceModal: byId("resourceModal"),
+    closeResourceModal: byId("closeResourceModal"),
+    resourceForm: byId("resourceForm"),
+    resourceType: byId("resourceType"),
+    resourceName: byId("resourceName"),
+    resourcePrefix: byId("resourcePrefix"),
+    resourceTeam: byId("resourceTeam"),
+    resourceStatus: byId("resourceStatus"),
+    resourceAddress: byId("resourceAddress"),
+    resourceLatitude: byId("resourceLatitude"),
+    resourceLongitude: byId("resourceLongitude"),
+    selectOnMapButton: byId("selectOnMapButton"),
+    useMapCenterButton: byId("useMapCenterButton"),
+    cancelResourceForm: byId("cancelResourceForm"),
+    saveResourceButton: byId("saveResourceButton"),
+    openLibraryFromForm: byId("openLibraryFromForm"),
+
+    placementBanner: byId("placementBanner"),
+    cancelPlacementButton: byId("cancelPlacementButton"),
+
+    libraryModal: byId("libraryModal"),
+    closeLibraryModal: byId("closeLibraryModal"),
+    resourceTypeForm: byId("resourceTypeForm"),
+    typeName: byId("typeName"),
+    typeCategory: byId("typeCategory"),
+    typeImageFile: byId("typeImageFile"),
+    uploadDropzone: byId("uploadDropzone"),
+    typeImagePreview: byId("typeImagePreview"),
+    imagePreviewPlaceholder: byId("imagePreviewPlaceholder"),
+    typeWidth: byId("typeWidth"),
+    typeHeight: byId("typeHeight"),
+    saveResourceTypeButton: byId("saveResourceTypeButton"),
+    libraryTypeCount: byId("libraryTypeCount"),
+    libraryItems: byId("libraryItems"),
+
+    editResourceModal: byId("editResourceModal"),
+    closeEditResourceModal: byId("closeEditResourceModal"),
+    editResourceForm: byId("editResourceForm"),
+    editResourceType: byId("editResourceType"),
+    editResourceName: byId("editResourceName"),
+    editResourcePrefix: byId("editResourcePrefix"),
+    editResourceTeam: byId("editResourceTeam"),
+    editResourceStatus: byId("editResourceStatus"),
+    editResourceAddress: byId("editResourceAddress"),
+    cancelEditResource: byId("cancelEditResource"),
+    saveEditResourceButton: byId("saveEditResourceButton"),
+
+    visualSettingsModal: byId("visualSettingsModal"),
+    closeVisualSettings: byId("closeVisualSettings"),
+    visualSettingsForm: byId("visualSettingsForm"),
+    maxIconSizeRange: byId("maxIconSizeRange"),
+    maxIconSizeValue: byId("maxIconSizeValue"),
+    minIconSizeRange: byId("minIconSizeRange"),
+    minIconSizeValue: byId("minIconSizeValue"),
+    labelSizeRange: byId("labelSizeRange"),
+    labelSizeValue: byId("labelSizeValue"),
+    showLabelsToggle: byId("showLabelsToggle"),
+    settingsPreviewResource: byId("settingsPreviewResource"),
+    settingsPreviewLabel: byId("settingsPreviewLabel"),
+    resetVisualSettings: byId("resetVisualSettings"),
+    cancelVisualSettings: byId("cancelVisualSettings"),
+    saveVisualSettings: byId("saveVisualSettings")
+  };
+
+  const categoryLabels = {
+    viatura: "Viatura",
+    motocicleta: "Moto",
+    guarda: "Guarda",
+    onibus: "Ônibus",
+    base_movel: "Base móvel",
+    outro: "Outro"
+  };
+
+  const categoryDefaults = {
+    viatura: { width: 100, height: 65 },
+    motocicleta: { width: 90, height: 70 },
+    guarda: { width: 48, height: 100 },
+    onibus: { width: 125, height: 72 },
+    base_movel: { width: 115, height: 72 },
+    outro: { width: 90, height: 70 }
+  };
+
+  const statusLabels = {
+    disponivel: "Disponível",
+    em_operacao: "Em operação",
+    indisponivel: "Indisponível",
+    manutencao: "Em manutenção",
+    fora_de_servico: "Fora de serviço"
+  };
+
+  let allResources = [];
+  let visibleResources = [];
+  let resourceTypes = [];
+  let activeCategory = "todos";
+  let currentTheme = "light";
+  let previousPrintTheme = "light";
+  let selectedResource = null;
+  let toastTimer = null;
+  let imagePreviewUrl = null;
+  let returnToResourceForm = false;
+
+  let visualSettings = {
+    iconPercent: 100,
+    minIconPercent: 38,
+    labelSize: 12,
+    showLabels: true
+  };
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function normalizeRotation(value) {
+    return Math.round(((Number(value || 0) % 360) + 360) % 360);
+  }
+
+  function showToast(title, message) {
+    clearTimeout(toastTimer);
+    els.toastTitle.textContent = title;
+    els.toastMessage.textContent = message;
+    els.toast.hidden = false;
+    toastTimer = setTimeout(() => {
+      els.toast.hidden = true;
+    }, 3400);
+  }
+
+  function setConnection(state, title, subtitle) {
+    els.connectionDot.className = `connection-dot ${state || ""}`;
+    els.connectionTitle.textContent = title;
+    els.connectionSubtitle.textContent = subtitle;
+  }
+
+  function applyTheme(theme, options = {}) {
+    currentTheme = theme === "dark" ? "dark" : "light";
+    root.dataset.theme = currentTheme;
+
+    if (options.persist !== false) {
+      localStorage.setItem(config.themeStorageKey, currentTheme);
+    }
+
+    if (currentTheme === "dark") {
+      els.themeIcon.textContent = "☀";
+      els.themeText.textContent = "Tema claro";
+    } else {
+      els.themeIcon.textContent = "☾";
+      els.themeText.textContent = "Tema escuro";
+    }
+
+    if (options.updateMap !== false) {
+      window.MapModule.setTheme(currentTheme);
+    }
+  }
+
+  function toggleSidebar() {
+    const collapsed = els.appShell.classList.toggle("sidebar-collapsed");
+    localStorage.setItem(
+      config.sidebarStorageKey,
+      collapsed ? "collapsed" : "expanded"
+    );
+    window.MapModule.resize();
+  }
+
+  function updateClock() {
+    els.currentDateTime.textContent = new Date().toLocaleString("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short"
+    });
+  }
+
+  function enterPrintMode() {
+    if (body.classList.contains("print-mode")) return;
+    previousPrintTheme = currentTheme;
+    body.classList.add("print-mode");
+    applyTheme("light", { persist: false });
+    els.printExitButton.hidden = false;
+    els.printHint.hidden = false;
+    window.MapModule.resize();
+  }
+
+  function exitPrintMode() {
+    if (!body.classList.contains("print-mode")) return;
+    body.classList.remove("print-mode");
+    applyTheme(previousPrintTheme, { persist: false });
+    els.printExitButton.hidden = true;
+    els.printHint.hidden = true;
+    window.MapModule.resize();
+  }
+
+  function isCurrentlyActive(resource) {
+    const now = Date.now();
+    const start = resource.inicio_em ? new Date(resource.inicio_em).getTime() : null;
+    const end = resource.fim_em ? new Date(resource.fim_em).getTime() : null;
+
+    return !(
+      (Number.isFinite(start) && now < start) ||
+      (Number.isFinite(end) && now > end)
+    );
+  }
+
+  function applyFilters() {
+    const query = els.globalSearch.value.trim().toLocaleLowerCase("pt-BR");
+
+    visibleResources = allResources.filter((resource) => {
+      const category = resource.tipo_recurso?.categoria || "outro";
+      const matchesCategory =
+        activeCategory === "todos" || category === activeCategory;
+
+      const searchable = [
+        resource.nome_exibicao,
+        resource.prefixo,
+        resource.equipe?.nome,
+        resource.endereco,
+        resource.tipo_recurso?.nome
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase("pt-BR");
+
+      return matchesCategory && (!query || searchable.includes(query));
+    });
+
+    window.MapModule.setFilteredResources(visibleResources);
+    renderResourceList();
+    updateSummaries();
+    els.mapEmpty.hidden = visibleResources.length > 0;
+  }
+
+  function updateSummaries() {
+    const activeCount = visibleResources.filter(
+      (resource) =>
+        resource.status === "em_operacao" && isCurrentlyActive(resource)
+    ).length;
+
+    els.resourceTotal.textContent = `${visibleResources.length} recurso${
+      visibleResources.length === 1 ? "" : "s"
+    }`;
+
+    els.summaryTotal.textContent = String(visibleResources.length);
+    els.summaryActive.textContent = String(activeCount);
+  }
+
+  function renderResourceList() {
+    els.resourceList.innerHTML = "";
+
+    if (!visibleResources.length) {
+      els.resourceList.innerHTML = `
+        <div class="resource-skeleton">
+          Nenhum recurso corresponde aos filtros.
+        </div>
+      `;
+      return;
+    }
+
+    for (const resource of visibleResources) {
+      const type = resource.tipo_recurso || {};
+      const imageUrl = window.SupabaseService.publicImageUrl(type.imagem_path);
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "resource-item";
+      button.dataset.resourceId = resource.id;
+
+      button.innerHTML = `
+        <div class="resource-thumb">
+          ${
+            imageUrl
+              ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(
+                  resource.nome_exibicao
+                )}" />`
+              : "—"
+          }
+        </div>
+
+        <div class="resource-copy">
+          <strong>${escapeHtml(resource.nome_exibicao)}</strong>
+          <span>${escapeHtml(
+            resource.equipe?.nome ||
+              categoryLabels[type.categoria] ||
+              "Sem equipe"
+          )}</span>
+        </div>
+
+        <span class="resource-tag">
+          ${escapeHtml(categoryLabels[type.categoria] || "Outro")}
+        </span>
+      `;
+
+      button.addEventListener("click", () => {
+        selectResource(resource, true);
+      });
+
+      els.resourceList.appendChild(button);
+    }
+  }
+
+  function selectResource(resource, centerMap = false) {
+    selectedResource = resource || null;
+
+    window.MapModule.selectResource(resource?.id || null, centerMap);
+
+    document.querySelectorAll(".resource-item").forEach((item) => {
+      item.classList.toggle(
+        "selected",
+        item.dataset.resourceId === resource?.id
+      );
+    });
+
+    renderResourceDetails(resource);
+  }
+
+  function updateFlipButtons(isMirrored) {
+    els.flipNormalButton.classList.toggle("active", !isMirrored);
+    els.flipMirrorButton.classList.toggle("active", isMirrored);
+    els.flipValue.textContent = isMirrored ? "Esquerda" : "Direita";
+  }
+
+  function renderResourceDetails(resource) {
+    if (!resource) {
+      els.resourceDetail.hidden = true;
+      selectedResource = null;
+      return;
+    }
+
+    const type = resource.tipo_recurso || {};
+    const imageUrl = window.SupabaseService.publicImageUrl(type.imagem_path);
+    const rotation = normalizeRotation(resource.rotacao_graus);
+    const mirrored = Boolean(resource.invertido_horizontal);
+
+    els.detailImage.src = imageUrl;
+    els.detailImage.alt = type.nome || resource.nome_exibicao || "Recurso";
+    els.detailImage.style.transform =
+      `rotate(${rotation}deg) scaleX(${mirrored ? -1 : 1})`;
+
+    els.detailCategory.textContent = categoryLabels[type.categoria] || "Recurso";
+    els.detailName.textContent =
+      resource.nome_exibicao || resource.prefixo || "Recurso";
+    els.detailTeam.textContent =
+      resource.equipe?.nome || "Sem equipe cadastrada";
+    els.detailStatus.textContent =
+      statusLabels[resource.status] || resource.status || "—";
+    els.detailAddress.textContent =
+      resource.endereco || "Endereço não informado";
+    els.detailCoordinates.textContent =
+      `${Number(resource.latitude).toFixed(6)}, ` +
+      `${Number(resource.longitude).toFixed(6)}`;
+
+    els.rotationRange.value = String(rotation);
+    els.rotationValue.textContent = `${rotation}°`;
+    updateFlipButtons(mirrored);
+
+    els.moveHelp.textContent =
+      "Arraste a própria figura direto no mapa. Clique nela apenas se quiser abrir este cartão.";
+
+    els.resourceDetail.hidden = false;
+  }
+
+  function setRotationPreview(value) {
+    if (!selectedResource) return;
+
+    const rotation = normalizeRotation(value);
+    const mirrored = Boolean(selectedResource.invertido_horizontal);
+
+    els.rotationRange.value = String(rotation);
+    els.rotationValue.textContent = `${rotation}°`;
+    els.detailImage.style.transform =
+      `rotate(${rotation}deg) scaleX(${mirrored ? -1 : 1})`;
+
+    window.MapModule.previewRotation(selectedResource.id, rotation);
+  }
+
+  async function saveRotation(value) {
+    if (!selectedResource) return;
+
+    const rotation = normalizeRotation(value);
+    setRotationPreview(rotation);
+
+    try {
+      await window.SupabaseService.updateResourceRotation(
+        selectedResource.id,
+        rotation
+      );
+
+      selectedResource.rotacao_graus = rotation;
+
+      const stored = allResources.find(
+        (item) => item.id === selectedResource.id
+      );
+
+      if (stored) stored.rotacao_graus = rotation;
+
+      window.MapModule.commitRotation(selectedResource.id, rotation);
+
+      showToast(
+        "Rotação atualizada",
+        `${selectedResource.nome_exibicao}: ${rotation}°.`
+      );
+    } catch (error) {
+      console.error(error);
+      showToast(
+        "Erro ao salvar",
+        "Não foi possível salvar a rotação."
+      );
+    }
+  }
+
+  async function saveFlip(flipped) {
+    if (!selectedResource) return;
+
+    const mirrored = Boolean(flipped);
+    updateFlipButtons(mirrored);
+    els.detailImage.style.transform =
+      `rotate(${normalizeRotation(selectedResource.rotacao_graus)}deg) ` +
+      `scaleX(${mirrored ? -1 : 1})`;
+
+    window.MapModule.previewFlip(selectedResource.id, mirrored);
+
+    try {
+      await window.SupabaseService.updateResourceFlip(
+        selectedResource.id,
+        mirrored
+      );
+
+      selectedResource.invertido_horizontal = mirrored;
+
+      const stored = allResources.find(
+        (item) => item.id === selectedResource.id
+      );
+
+      if (stored) stored.invertido_horizontal = mirrored;
+
+      window.MapModule.commitFlip(selectedResource.id, mirrored);
+
+      showToast(
+        "Lado atualizado",
+        `${selectedResource.nome_exibicao} agora está virado para ${
+          mirrored ? "a esquerda" : "a direita"
+        }.`
+      );
+    } catch (error) {
+      console.error(error);
+      showToast(
+        "Erro ao salvar",
+        "Não foi possível salvar o lado da figura."
+      );
+    }
+  }
+
+  async function savePosition(resource, position) {
+    await window.SupabaseService.updateResourcePosition(
+      resource.id,
+      position.latitude,
+      position.longitude
+    );
+
+    resource.latitude = position.latitude;
+    resource.longitude = position.longitude;
+
+    const stored = allResources.find(
+      (item) => item.id === resource.id
+    );
+
+    if (stored) {
+      stored.latitude = position.latitude;
+      stored.longitude = position.longitude;
+    }
+
+    if (selectedResource?.id === resource.id) {
+      els.detailCoordinates.textContent =
+        `${position.latitude.toFixed(6)}, ` +
+        `${position.longitude.toFixed(6)}`;
+    }
+
+    showToast(
+      "Posição atualizada",
+      `${resource.nome_exibicao} foi reposicionado.`
+    );
+  }
+
+  async function loadResourceTypes(selectedTypeId = null) {
+    resourceTypes = await window.SupabaseService.loadResourceTypes();
+
+    const optionsHtml =
+      `<option value="">Selecione...</option>` +
+      resourceTypes
+        .map(
+          (type) => `
+            <option value="${escapeHtml(type.id)}">
+              ${escapeHtml(type.nome)} — ${escapeHtml(
+                categoryLabels[type.categoria] || type.categoria
+              )}
+            </option>
+          `
+        )
+        .join("");
+
+    els.resourceType.innerHTML = optionsHtml;
+    els.editResourceType.innerHTML = optionsHtml;
+
+    if (selectedTypeId) {
+      els.resourceType.value = selectedTypeId;
+    }
+
+    renderLibraryItems();
+  }
+
+  function renderLibraryItems() {
+    els.libraryTypeCount.textContent = String(resourceTypes.length);
+
+    if (!resourceTypes.length) {
+      els.libraryItems.innerHTML = `
+        <div class="resource-skeleton">
+          Nenhum tipo de recurso cadastrado.
+        </div>
+      `;
+      return;
+    }
+
+    els.libraryItems.innerHTML = resourceTypes
+      .map((type) => {
+        const imageUrl = window.SupabaseService.publicImageUrl(type.imagem_path);
+
+        return `
+          <article class="library-type-card">
+            <div class="library-type-image">
+              <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(type.nome)}" />
+            </div>
+
+            <div class="library-type-copy">
+              <strong>${escapeHtml(type.nome)}</strong>
+              <span>${escapeHtml(
+                categoryLabels[type.categoria] || type.categoria
+              )}</span>
+              <small>
+                ${Number(type.largura_marcador)} ×
+                ${Number(type.altura_marcador)} px
+              </small>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  function openEditResourceModal() {
+    if (!selectedResource) return;
+
+    els.editResourceType.value =
+      selectedResource.tipo_recurso?.id || "";
+
+    els.editResourceName.value =
+      selectedResource.nome_exibicao || "";
+
+    els.editResourcePrefix.value =
+      selectedResource.prefixo || "";
+
+    els.editResourceTeam.value =
+      selectedResource.equipe?.nome || "";
+
+    els.editResourceStatus.value =
+      selectedResource.status || "em_operacao";
+
+    els.editResourceAddress.value =
+      selectedResource.endereco || "";
+
+    els.editResourceModal.hidden = false;
+  }
+
+  function closeEditResourceModal() {
+    els.editResourceModal.hidden = true;
+  }
+
+  async function saveEditedResource(event) {
+    event.preventDefault();
+
+    if (!selectedResource) return;
+
+    const name =
+      els.editResourceName.value.trim();
+
+    const typeId =
+      els.editResourceType.value;
+
+    if (!name || !typeId) {
+      showToast(
+        "Campos obrigatórios",
+        "Informe o tipo e o nome do recurso."
+      );
+      return;
+    }
+
+    els.saveEditResourceButton.disabled = true;
+    els.saveEditResourceButton.textContent =
+      "Salvando...";
+
+    try {
+      await window.SupabaseService
+        .updateOperationalResource(
+          selectedResource.id,
+          {
+            typeId,
+            name,
+            prefix:
+              els.editResourcePrefix.value.trim(),
+            teamName:
+              els.editResourceTeam.value.trim(),
+            status:
+              els.editResourceStatus.value,
+            address:
+              els.editResourceAddress.value.trim()
+          }
+        );
+
+      closeEditResourceModal();
+      const editedId = selectedResource.id;
+
+      await loadData({ fit: false });
+
+      const updated =
+        allResources.find(
+          (item) => item.id === editedId
+        );
+
+      if (updated) {
+        selectResource(updated, false);
+      }
+
+      showToast(
+        "Recurso atualizado",
+        `${name} foi alterado com sucesso.`
+      );
+    } catch (error) {
+      console.error(error);
+
+      showToast(
+        "Erro ao editar",
+        error?.message ||
+          "Não foi possível salvar as alterações."
+      );
+    } finally {
+      els.saveEditResourceButton.disabled = false;
+      els.saveEditResourceButton.textContent =
+        "Salvar alterações";
+    }
+  }
+
+  function normalizeVisualSettings(settings) {
+    const iconPercent = Math.max(
+      50,
+      Math.min(
+        160,
+        Number(settings?.tamanho_icones_percentual ?? settings?.iconPercent ?? 100)
+      )
+    );
+
+    const minIconPercent = Math.min(
+      iconPercent,
+      Math.max(
+        20,
+        Math.min(
+          80,
+          Number(
+            settings?.tamanho_minimo_icones_percentual ??
+            settings?.minIconPercent ??
+            38
+          )
+        )
+      )
+    );
+
+    return {
+      iconPercent,
+      minIconPercent,
+      labelSize: Math.max(
+        8,
+        Math.min(
+          22,
+          Number(settings?.tamanho_etiqueta ?? settings?.labelSize ?? 12)
+        )
+      ),
+      showLabels:
+        settings?.mostrar_nomes !== undefined
+          ? settings.mostrar_nomes !== false
+          : settings?.showLabels !== false
+    };
+  }
+
+  function populateVisualSettingsForm() {
+    els.maxIconSizeRange.value =
+      String(visualSettings.iconPercent);
+
+    els.minIconSizeRange.value =
+      String(visualSettings.minIconPercent);
+
+    els.labelSizeRange.value =
+      String(visualSettings.labelSize);
+
+    els.showLabelsToggle.checked =
+      visualSettings.showLabels;
+
+    updateVisualSettingsPreview();
+  }
+
+  function updateVisualSettingsPreview() {
+    const maxSize =
+      Number(els.maxIconSizeRange.value);
+
+    let minSize =
+      Number(els.minIconSizeRange.value);
+
+    if (minSize > maxSize) {
+      minSize = maxSize;
+      els.minIconSizeRange.value =
+        String(minSize);
+    }
+
+    const labelSize =
+      Number(els.labelSizeRange.value);
+
+    const showLabels =
+      els.showLabelsToggle.checked;
+
+    els.maxIconSizeValue.textContent =
+      `${maxSize}%`;
+
+    els.minIconSizeValue.textContent =
+      `${minSize}%`;
+
+    els.labelSizeValue.textContent =
+      `${labelSize} px`;
+
+    const previewWidth =
+      Math.max(50, 100 * (maxSize / 100));
+
+    const previewHeight =
+      Math.max(32, 64 * (maxSize / 100));
+
+    const previewImage =
+      els.settingsPreviewResource.querySelector(
+        ".settings-preview-image"
+      );
+
+    previewImage.style.width =
+      `${previewWidth}px`;
+
+    previewImage.style.height =
+      `${previewHeight}px`;
+
+    els.settingsPreviewLabel.style.fontSize =
+      `${labelSize}px`;
+
+    els.settingsPreviewLabel.style.opacity =
+      showLabels ? "1" : "0";
+
+    els.settingsPreviewLabel.style.visibility =
+      showLabels ? "visible" : "hidden";
+  }
+
+  function openVisualSettingsModal() {
+    populateVisualSettingsForm();
+    els.visualSettingsModal.hidden = false;
+  }
+
+  function closeVisualSettingsModal() {
+    els.visualSettingsModal.hidden = true;
+  }
+
+  function resetVisualSettingsForm() {
+    els.maxIconSizeRange.value = "100";
+    els.minIconSizeRange.value = "38";
+    els.labelSizeRange.value = "12";
+    els.showLabelsToggle.checked = true;
+    updateVisualSettingsPreview();
+  }
+
+  async function saveVisualSettingsForm(event) {
+    event.preventDefault();
+
+    const nextSettings =
+      normalizeVisualSettings({
+        iconPercent:
+          Number(els.maxIconSizeRange.value),
+        minIconPercent:
+          Number(els.minIconSizeRange.value),
+        labelSize:
+          Number(els.labelSizeRange.value),
+        showLabels:
+          els.showLabelsToggle.checked
+      });
+
+    els.saveVisualSettings.disabled = true;
+    els.saveVisualSettings.textContent =
+      "Salvando...";
+
+    try {
+      const saved =
+        await window.SupabaseService
+          .updateMapSettings(nextSettings);
+
+      visualSettings =
+        normalizeVisualSettings(saved);
+
+      window.MapModule.applyVisualSettings(
+        visualSettings
+      );
+
+      closeVisualSettingsModal();
+
+      showToast(
+        "Ajustes salvos",
+        "A aparência do mapa foi atualizada."
+      );
+    } catch (error) {
+      console.error(error);
+
+      showToast(
+        "Erro ao salvar",
+        error?.message ||
+          "Execute o SQL da Etapa 17 no Supabase."
+      );
+    } finally {
+      els.saveVisualSettings.disabled = false;
+      els.saveVisualSettings.textContent =
+        "Salvar ajustes";
+    }
+  }
+
+  function resetResourceForm() {
+    els.resourceForm.reset();
+    els.resourceStatus.value = "em_operacao";
+    els.resourceLatitude.value = "";
+    els.resourceLongitude.value = "";
+  }
+
+  function openResourceModal() {
+    resetResourceForm();
+    els.resourceModal.hidden = false;
+  }
+
+  function closeResourceModal() {
+    els.resourceModal.hidden = true;
+  }
+
+  function resetTypeForm() {
+    els.resourceTypeForm.reset();
+    els.typeCategory.value = "viatura";
+    applyCategoryDefaults();
+    clearImagePreview();
+  }
+
+  function openLibraryModal(shouldReturnToResourceForm = false) {
+    returnToResourceForm = shouldReturnToResourceForm;
+
+    if (shouldReturnToResourceForm) {
+      els.resourceModal.hidden = true;
+    }
+
+    els.libraryModal.hidden = false;
+    renderLibraryItems();
+  }
+
+  function closeLibraryModal() {
+    els.libraryModal.hidden = true;
+
+    if (returnToResourceForm) {
+      els.resourceModal.hidden = false;
+    }
+
+    returnToResourceForm = false;
+  }
+
+  function applyCategoryDefaults() {
+    const defaults =
+      categoryDefaults[els.typeCategory.value] ||
+      categoryDefaults.outro;
+
+    els.typeWidth.value = String(defaults.width);
+    els.typeHeight.value = String(defaults.height);
+  }
+
+  function clearImagePreview() {
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl);
+      imagePreviewUrl = null;
+    }
+
+    els.typeImagePreview.src = "";
+    els.typeImagePreview.hidden = true;
+    els.imagePreviewPlaceholder.hidden = false;
+  }
+
+  function previewSelectedImage() {
+    clearImagePreview();
+
+    const file = els.typeImageFile.files?.[0];
+    if (!file) return;
+
+    imagePreviewUrl = URL.createObjectURL(file);
+    els.typeImagePreview.src = imagePreviewUrl;
+    els.typeImagePreview.hidden = false;
+    els.imagePreviewPlaceholder.hidden = true;
+  }
+
+  function startPlacement() {
+    closeResourceModal();
+    els.placementBanner.hidden = false;
+    els.mapStage.classList.add("placement-active");
+
+    window.MapModule.startPlacement((position) => {
+      els.resourceLatitude.value = position.latitude.toFixed(6);
+      els.resourceLongitude.value = position.longitude.toFixed(6);
+
+      els.placementBanner.hidden = true;
+      els.mapStage.classList.remove("placement-active");
+      els.resourceModal.hidden = false;
+
+      showToast(
+        "Posição selecionada",
+        "Confira os dados e salve o recurso."
+      );
+    });
+  }
+
+  function cancelPlacement() {
+    window.MapModule.cancelPlacement();
+    els.placementBanner.hidden = true;
+    els.mapStage.classList.remove("placement-active");
+    els.resourceModal.hidden = false;
+  }
+
+  async function createResource(event) {
+    event.preventDefault();
+
+    const latitude = Number(els.resourceLatitude.value);
+    const longitude = Number(els.resourceLongitude.value);
+    const name = els.resourceName.value.trim();
+    const typeId = els.resourceType.value;
+
+    if (
+      !typeId ||
+      !name ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
+    ) {
+      showToast(
+        "Campos obrigatórios",
+        "Informe tipo, nome e posição no mapa."
+      );
+      return;
+    }
+
+    els.saveResourceButton.disabled = true;
+    els.saveResourceButton.textContent = "Salvando...";
+
+    try {
+      await window.SupabaseService.createOperationalResource({
+        typeId,
+        name,
+        prefix: els.resourcePrefix.value.trim(),
+        teamName: els.resourceTeam.value.trim(),
+        status: els.resourceStatus.value,
+        address: els.resourceAddress.value.trim(),
+        latitude,
+        longitude
+      });
+
+      closeResourceModal();
+      await loadData();
+
+      showToast(
+        "Recurso cadastrado",
+        `${name} foi incluído no mapa.`
+      );
+    } catch (error) {
+      console.error(error);
+
+      showToast(
+        "Erro ao cadastrar",
+        error?.message || "Confira o Supabase."
+      );
+    } finally {
+      els.saveResourceButton.disabled = false;
+      els.saveResourceButton.textContent = "Salvar recurso";
+    }
+  }
+
+  async function createResourceType(event) {
+    event.preventDefault();
+
+    const name = els.typeName.value.trim();
+    const category = els.typeCategory.value;
+    const file = els.typeImageFile.files?.[0];
+    const width = Number(els.typeWidth.value);
+    const height = Number(els.typeHeight.value);
+
+    if (
+      !name ||
+      !category ||
+      !file ||
+      !Number.isFinite(width) ||
+      !Number.isFinite(height)
+    ) {
+      showToast(
+        "Campos obrigatórios",
+        "Informe nome, categoria, imagem e tamanho."
+      );
+      return;
+    }
+
+    els.saveResourceTypeButton.disabled = true;
+    els.saveResourceTypeButton.textContent = "Enviando imagem...";
+
+    try {
+      const created = await window.SupabaseService.createResourceType({
+        name,
+        category,
+        file,
+        width,
+        height
+      });
+
+      await loadResourceTypes(created.id);
+      resetTypeForm();
+
+      showToast(
+        "Imagem enviada",
+        `${created.nome} já está disponível para uso.`
+      );
+
+      if (returnToResourceForm) {
+        closeLibraryModal();
+      }
+    } catch (error) {
+      console.error(error);
+
+      showToast(
+        "Erro no envio",
+        error?.message || "Não foi possível enviar a imagem."
+      );
+    } finally {
+      els.saveResourceTypeButton.disabled = false;
+      els.saveResourceTypeButton.textContent =
+        "Enviar imagem e salvar tipo";
+    }
+  }
+
+  async function deleteSelectedResource() {
+    if (!selectedResource) return;
+
+    const name = selectedResource.nome_exibicao;
+    const confirmed = window.confirm(
+      `Deseja excluir "${name}" do mapa?`
+    );
+
+    if (!confirmed) return;
+
+    els.deleteResourceButton.disabled = true;
+    els.deleteResourceButton.textContent = "Excluindo...";
+
+    try {
+      await window.SupabaseService.deleteOperationalResource(
+        selectedResource.id
+      );
+
+      selectResource(null);
+      await loadData({ fit: false });
+
+      showToast(
+        "Recurso excluído",
+        `${name} foi removido.`
+      );
+    } catch (error) {
+      console.error(error);
+
+      showToast(
+        "Erro ao excluir",
+        "Não foi possível remover o recurso."
+      );
+    } finally {
+      els.deleteResourceButton.disabled = false;
+      els.deleteResourceButton.textContent = "Excluir recurso";
+    }
+  }
+
+  async function loadData(options = {}) {
+    try {
+      allResources =
+        await window.SupabaseService.loadOperationalResources();
+
+      window.MapModule.setResources(allResources);
+      applyFilters();
+
+      setConnection(
+        "connected",
+        "Supabase conectado",
+        "Acesso público"
+      );
+
+      els.mapStatusText.textContent = "Mapa atualizado.";
+      els.mapEmpty.hidden = allResources.length > 0;
+
+      if (allResources.length && options.fit !== false) {
+        window.MapModule.fitAll();
+      }
+    } catch (error) {
+      console.error(error);
+
+      setConnection(
+        "error",
+        "Falha na conexão",
+        "Confira o Supabase"
+      );
+
+      els.mapStatusText.textContent =
+        "Erro ao carregar recursos.";
+    }
+  }
+
+  async function initialize() {
+    applyTheme(
+      localStorage.getItem(config.themeStorageKey) || "light",
+      { updateMap: false }
+    );
+
+    els.appShell.classList.toggle(
+      "sidebar-collapsed",
+      localStorage.getItem(config.sidebarStorageKey) === "collapsed"
+    );
+
+    updateClock();
+
+    try {
+      const [settings] = await Promise.all([
+        window.SupabaseService.loadMapSettings(),
+        loadResourceTypes()
+      ]);
+
+      visualSettings =
+        normalizeVisualSettings(settings);
+
+      document.body.classList.toggle(
+        "labels-hidden",
+        !visualSettings.showLabels
+      );
+
+      window.MapModule.init({
+        settings,
+        theme: currentTheme,
+
+        onReady: async () => {
+          els.mapLoading.hidden = true;
+          await loadData();
+          showToast(
+            "Movimentação direta ativada",
+            "Agora você pode arrastar VTR, motos e guardas direto na figura."
+          );
+        },
+
+        onSelect: (resource) => {
+          selectedResource = resource || null;
+          renderResourceDetails(resource);
+        },
+
+        onPositionChange: savePosition,
+
+        onMoveState: (resource, state) => {
+          if (state === "dragging") {
+            els.mapStatusText.textContent = "Movendo recurso...";
+          } else if (state === "saved") {
+            els.mapStatusText.textContent = "Posição salva.";
+          } else if (state === "error") {
+            els.mapStatusText.textContent = "Erro ao salvar posição.";
+          }
+        },
+
+        onActionError: (message) => {
+          showToast("Erro", message);
+        },
+
+        onError: () => {
+          els.mapStatusText.textContent = "Falha no mapa.";
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      els.mapLoading.hidden = true;
+
+      setConnection(
+        "error",
+        "Falha na conexão",
+        "Execute o SQL da Etapa 14"
+      );
+    }
+  }
+
+  els.sidebarToggle.addEventListener("click", toggleSidebar);
+  els.libraryNavButton.addEventListener("click", () => openLibraryModal(false));
+
+  els.settingsNavButton.addEventListener(
+    "click",
+    openVisualSettingsModal
+  );
+
+  els.closeVisualSettings.addEventListener(
+    "click",
+    closeVisualSettingsModal
+  );
+
+  els.cancelVisualSettings.addEventListener(
+    "click",
+    closeVisualSettingsModal
+  );
+
+  els.visualSettingsModal.addEventListener(
+    "click",
+    (event) => {
+      if (event.target === els.visualSettingsModal) {
+        closeVisualSettingsModal();
+      }
+    }
+  );
+
+  els.visualSettingsForm.addEventListener(
+    "submit",
+    saveVisualSettingsForm
+  );
+
+  els.resetVisualSettings.addEventListener(
+    "click",
+    resetVisualSettingsForm
+  );
+
+  [
+    els.maxIconSizeRange,
+    els.minIconSizeRange,
+    els.labelSizeRange
+  ].forEach((input) => {
+    input.addEventListener(
+      "input",
+      updateVisualSettingsPreview
+    );
+  });
+
+  els.showLabelsToggle.addEventListener(
+    "change",
+    updateVisualSettingsPreview
+  );
+
+  els.themeToggle.addEventListener("click", () => {
+    applyTheme(currentTheme === "dark" ? "light" : "dark");
+  });
+
+  els.printModeButton.addEventListener("click", enterPrintMode);
+  els.printExitButton.addEventListener("click", exitPrintMode);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && body.classList.contains("print-mode")) {
+      exitPrintMode();
+    }
+  });
+
+  els.addResourceButton.addEventListener("click", openResourceModal);
+  els.closeResourceModal.addEventListener("click", closeResourceModal);
+  els.cancelResourceForm.addEventListener("click", closeResourceModal);
+
+  els.resourceModal.addEventListener("click", (event) => {
+    if (event.target === els.resourceModal) {
+      closeResourceModal();
+    }
+  });
+
+  els.resourceForm.addEventListener("submit", createResource);
+  els.openLibraryFromForm.addEventListener("click", () => openLibraryModal(true));
+
+  els.closeLibraryModal.addEventListener("click", closeLibraryModal);
+
+  els.libraryModal.addEventListener("click", (event) => {
+    if (event.target === els.libraryModal) {
+      closeLibraryModal();
+    }
+  });
+
+  els.resourceTypeForm.addEventListener("submit", createResourceType);
+  els.typeCategory.addEventListener("change", applyCategoryDefaults);
+  els.typeImageFile.addEventListener("change", previewSelectedImage);
+
+  ["dragenter", "dragover"].forEach((eventName) => {
+    els.uploadDropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      els.uploadDropzone.classList.add("dragging");
+    });
+  });
+
+  ["dragleave", "drop"].forEach((eventName) => {
+    els.uploadDropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      els.uploadDropzone.classList.remove("dragging");
+    });
+  });
+
+  els.uploadDropzone.addEventListener("drop", (event) => {
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    els.typeImageFile.files = transfer.files;
+    previewSelectedImage();
+  });
+
+  els.selectOnMapButton.addEventListener("click", startPlacement);
+  els.cancelPlacementButton.addEventListener("click", cancelPlacement);
+
+  els.useMapCenterButton.addEventListener("click", () => {
+    const center = window.MapModule.getCenter();
+    els.resourceLatitude.value = center.latitude.toFixed(6);
+    els.resourceLongitude.value = center.longitude.toFixed(6);
+
+    showToast(
+      "Centro selecionado",
+      "As coordenadas foram preenchidas."
+    );
+  });
+
+  els.globalSearch.addEventListener("input", applyFilters);
+
+  els.categoryFilters.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-category]");
+    if (!button) return;
+
+    activeCategory = button.dataset.category;
+
+    els.categoryFilters.querySelectorAll(".segment").forEach((item) => {
+      item.classList.toggle("active", item === button);
+    });
+
+    applyFilters();
+  });
+
+  els.fitAllButton.addEventListener("click", () => window.MapModule.fitAll());
+  els.refreshButton.addEventListener("click", () => loadData());
+  els.detailClose.addEventListener("click", () => selectResource(null));
+
+  els.rotationRange.addEventListener("input", () => {
+    setRotationPreview(els.rotationRange.value);
+  });
+
+  els.rotationRange.addEventListener("change", () => {
+    saveRotation(els.rotationRange.value);
+  });
+
+  els.rotateMinus.addEventListener("click", () => {
+    saveRotation(Number(els.rotationRange.value) - 15);
+  });
+
+  els.rotatePlus.addEventListener("click", () => {
+    saveRotation(Number(els.rotationRange.value) + 15);
+  });
+
+  els.rotationReset.addEventListener("click", () => saveRotation(0));
+  els.flipNormalButton.addEventListener("click", () => saveFlip(false));
+  els.flipMirrorButton.addEventListener("click", () => saveFlip(true));
+  els.editResourceButton.addEventListener(
+    "click",
+    openEditResourceModal
+  );
+
+  els.closeEditResourceModal.addEventListener(
+    "click",
+    closeEditResourceModal
+  );
+
+  els.cancelEditResource.addEventListener(
+    "click",
+    closeEditResourceModal
+  );
+
+  els.editResourceModal.addEventListener(
+    "click",
+    (event) => {
+      if (event.target === els.editResourceModal) {
+        closeEditResourceModal();
+      }
+    }
+  );
+
+  els.editResourceForm.addEventListener(
+    "submit",
+    saveEditedResource
+  );
+
+  els.deleteResourceButton.addEventListener("click", deleteSelectedResource);
+
+  window.addEventListener("resize", () => window.MapModule.resize());
+  setInterval(updateClock, 30000);
+  setInterval(() => loadData({ fit: false }), 60000);
+
+  resetTypeForm();
+  initialize();
+})();
+
+  </script>
+</body>
+</html>
